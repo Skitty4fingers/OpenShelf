@@ -8,6 +8,9 @@ primary_region = 'iad'
 
 [build]
 
+[env]
+  ASPNETCORE_URLS = "http://0.0.0.0:80"
+
 [http_service]
   internal_port = 80
   force_https = true
