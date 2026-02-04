@@ -65,7 +65,12 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("⚠️ RESETTING ALL USERS...");
         db.Users.RemoveRange(db.Users);
         db.SaveChanges();
-        
+    }
+
+    // Ensure Default Admin Exists (if no users found)
+    if (!db.Users.Any())
+    {
+        Console.WriteLine("Creating default admin user...");
         var admin = new User 
         { 
             Username = "admin", 
@@ -74,9 +79,14 @@ using (var scope = app.Services.CreateScope())
         };
         db.Users.Add(admin);
         db.SaveChanges();
-        Console.WriteLine("✅ USERS RESET. Default admin restored (admin/admin).");
-        return; // Exit after reset
+        Console.WriteLine("✅ Default admin created: admin / admin");
     }
 }
+
+// Critical for Fly.io / Docker reverse proxy to handle HTTPS correctly
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
 
 app.Run();
