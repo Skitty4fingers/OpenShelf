@@ -34,6 +34,17 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireClaim("Role", "Admin"));
 });
 
+// Persist Data Protection Keys (Prevent 400 errors on restart)
+// The cookie encryption keys are rotated if not persisted, invalidating all cookies/tokens.
+var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "data", "keys");
+if (!Directory.Exists(keysFolder))
+{
+    Directory.CreateDirectory(keysFolder);
+}
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
+    .SetApplicationName("OpenShelf");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -93,12 +104,6 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     KnownProxies = { }
 });
 
-// Persist Data Protection Keys (Prevent 400 errors on restart)
-// The cookie encryption keys are rotated if not persisted, invalidating all cookies/tokens.
-var keysFolder = Path.Combine(app.Environment.ContentRootPath, "data", "keys");
-Directory.CreateDirectory(keysFolder);
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
-    .SetApplicationName("OpenShelf");
+
 
 app.Run();

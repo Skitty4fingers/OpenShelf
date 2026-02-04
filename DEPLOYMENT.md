@@ -21,6 +21,12 @@ mkdir -p /opt/openshelf/data
 ### 3. Run the Container
 Map port 80 and the data volume.
 
+**Option A: Named Volume (Easiest)**
+```bash
+docker run -d --name openshelf -p 80:80 -v openshelf_data:/app/data openshelf
+```
+
+**Option B: Path Mapping (Linux/Pro)**
 ```bash
 docker run -d \
   --name openshelf \
@@ -30,7 +36,10 @@ docker run -d \
   openshelf
 ```
 
-Your app is now running at `http://your-server-ip`.
+Your app is now running at `http://localhost` (or your-server-ip).
+
+> [!NOTE]
+> The volume stores both your database (`openshelf.db`) and your security keys (`data/keys`). Keeping the keys persistent ensures that users aren't logged out when the container restarts.
 
 ---
 
