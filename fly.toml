@@ -1,18 +1,15 @@
-# fly.toml app configuration file generated for openshelf on 2026-02-04T04:41:21Z
+# fly.toml app configuration file generated for openshelf on 2026-02-04T05:18:23Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'openshelf'
-primary_region = 'iad'
+primary_region = 'sjc'
 
 [build]
 
-[env]
-  ASPNETCORE_URLS = "http://0.0.0.0:80"
-
 [http_service]
-  internal_port = 80
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
