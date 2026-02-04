@@ -1,0 +1,202 @@
+@page
+@model OpenShelf.Pages.AdminIndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-speedometer2"></i> Admin Dashboard</h1>
+    <div>
+        <form method="post" asp-page-handler="Export" class="d-inline me-2">
+            <button class="btn btn-primary"><i class="bi bi-download"></i> Export Full Backup</button>
+        </form>
+        <a asp-page="/Admin/Restore" class="btn btn-success me-2"><i class="bi bi-upload"></i> Restore Backup</a>
+        <a asp-page="/Admin/Users" class="btn btn-info me-2"><i class="bi bi-people"></i> Manage Users</a>
+        <a asp-page="/Index" class="btn btn-outline-secondary me-2">Back to Shelf</a>
+        <form method="post" asp-page-handler="Logout" class="d-inline">
+            <button class="btn btn-danger">Logout</button>
+        </form>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-@Model.MessageType alert-dismissible fade show" role="alert">
+        @Model.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["Warning"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-check"></i> Library Management (@Model.Recommendations.Count items)</span>
+        <div class="d-flex align-items-center gap-2">
+            <span id="selectionCount" class="badge bg-secondary">0 selected</span>
+            <button type="button" class="btn btn-danger btn-sm" id="bulkDeleteBtn" onclick="bulkDelete()" disabled>
+                <i class="bi bi-trash"></i> Delete Selected
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" id="bulkRefreshBtn" onclick="bulkRefresh()" disabled>
+                <i class="bi bi-arrow-clockwise"></i> Refresh Selected
+            </button>
+            <form method="post" asp-page-handler="ReSanitize" class="d-inline" onsubmit="return confirm('This will clean HTML entities and tags from ALL books. Continue?');">
+                <button type="submit" class="btn btn-warning btn-sm">
+                    <i class="bi bi-magic"></i> Re-Sanitize All Data
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="post" id="bulkForm">
+            <input type="hidden" name="selectedIds" id="selectedIds" />
+            
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Recommended By</th>
+                            <th>Date</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Recommendations)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input row-checkbox" value="@item.Id" data-id="@item.Id">
+                                </td>
+                                <td>@item.Id</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(item.Thumbnail))
+                                        {
+                                            <img src="@item.Thumbnail" width="30" height="45" class="me-2 rounded" style="object-fit:cover;">
+                                        }
+                                        <strong>@item.Title</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if(item.IsSeries) { <span class="badge bg-warning text-dark">Series (@item.ItemsCount)</span> }
+                                    else { <span class="badge bg-primary">Book</span> }
+                                </td>
+                                <td>@item.RecommendedBy</td>
+                                <td>@item.AddedAt.ToShortDateString()</td>
+                                <td class="text-center">
+                                    <form method="post" asp-page-handler="ToggleStaffPick" asp-route-id="@item.Id" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-sm @(item.IsStaffPick ? "btn-warning" : "btn-outline-secondary")" title="@(item.IsStaffPick ? "Remove Staff Pick" : "Make Staff Pick")">
+                                            <i class="bi bi-star-fill"></i>
+                                        </button>
+                                    </form>
+                                    <a asp-page="/Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary ms-1"><i class="bi bi-pencil"></i></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Simple, reliable selection tracking
+        let selectedIds = new Set();
+
+        // Update UI based on selection
+        function updateUI() {
+            const count = selectedIds.size;
+            document.getElementById('selectionCount').textContent = count + ' selected';
+            document.getElementById('bulkDeleteBtn').disabled = count === 0;
+            document.getElementById('bulkRefreshBtn').disabled = count === 0;
+            
+            // Update badge color
+            const badge = document.getElementById('selectionCount');
+            if (count > 0) {
+                badge.classList.remove('bg-secondary');
+                badge.classList.add('bg-success');
+            } else {
+                badge.classList.remove('bg-success');
+                badge.classList.add('bg-secondary');
+            }
+        }
+
+        // Handle individual checkbox changes
+        document.addEventListener('DOMContentLoaded', function() {
+            // Individual checkboxes
+            document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const id = this.value;
+                    if (this.checked) {
+                        selectedIds.add(id);
+                    } else {
+                        selectedIds.delete(id);
+                        document.getElementById('selectAll').checked = false;
+                    }
+                    updateUI();
+                });
+            });
+
+            // Select All checkbox
+            document.getElementById('selectAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.row-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                    const id = checkbox.value;
+                    if (this.checked) {
+                        selectedIds.add(id);
+                    } else {
+                        selectedIds.delete(id);
+                    }
+                });
+                updateUI();
+            });
+
+            // Initial UI state
+            updateUI();
+        });
+
+        // Bulk delete function
+        function bulkDelete() {
+            if (selectedIds.size === 0) return;
+            
+            if (!confirm('Are you sure you want to delete ' + selectedIds.size + ' items? This cannot be undone.')) {
+                return;
+            }
+
+            const form = document.getElementById('bulkForm');
+            document.getElementById('selectedIds').value = Array.from(selectedIds).join(',');
+            form.action = '?handler=BulkDelete';
+            form.submit();
+        }
+
+        // Bulk refresh function
+        function bulkRefresh() {
+            if (selectedIds.size === 0) return;
+
+            if (!confirm('Refresh metadata for ' + selectedIds.size + ' items?')) {
+                return;
+            }
+
+            const form = document.getElementById('bulkForm');
+            document.getElementById('selectedIds').value = Array.from(selectedIds).join(',');
+            form.action = '?handler=BulkRefresh';
+            form.submit();
+        }
+    </script>
+}

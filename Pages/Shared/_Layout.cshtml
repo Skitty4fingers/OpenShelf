@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Open Shelf</title>
+    <link rel="icon" type="image/png" href="~/images/logo.png" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="@Url.Content("~/css/site.css")" rel="stylesheet">
+    <script src="@Url.Content("~/js/theme-toggle.js")"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand fw-bold d-flex align-items-center gap-2" asp-area="" asp-page="/Index">
+                    <i class="bi bi-book-half" style="color: #a65d57; font-size: 1.5rem;"></i>
+                    <span style="color: #a65d57;">Open</span> <span style="color: #c9a66b;">Shelf</span>
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Index">Shelf</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Add">Add Recommendation</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex align-items-center ms-auto">
+                        <button class="btn btn-link nav-link p-0" onclick="toggleTheme()" aria-label="Toggle theme">
+                            <i id="theme-icon" class="bi bi-moon-stars" style="font-size: 1.2rem;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted py-3 mt-auto">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span>&copy; @DateTime.Now.Year - Open Shelf</span>
+            <a asp-page="/Admin/Login" class="text-muted small text-decoration-none opacity-50">Admin</a>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

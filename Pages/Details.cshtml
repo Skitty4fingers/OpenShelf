@@ -1,0 +1,836 @@
+@page "{id:int}"
+@model OpenShelf.Pages.DetailsModel
+@{
+    ViewData["Title"] = Model.Recommendation.Title;
+    var isSeries = Model.Recommendation.IsSeries;
+    var firstBook = Model.Recommendation.Items.FirstOrDefault();
+}
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-page="/Index">Shelf</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Recommendation.Title</li>
+    </ol>
+</nav>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- Left Column: Cover Image(s) -->
+    <div class="col-md-4 mb-4">
+        @if (isSeries)
+        {
+            <!-- Series: Stack of covers -->
+            <div class="position-relative" style="height: 350px;">
+                @foreach (var (item, idx) in Model.Recommendation.Items.Take(3).Select((x, i) => (x, i)))
+                {
+                    <img src="@(item.ThumbnailUrl ?? "/images/no-cover.png")" 
+                         alt="@item.Title" 
+                         class="rounded shadow position-absolute"
+                         style="width: 200px; height: 300px; object-fit: cover; left: @(idx * 20)px; top: @(idx * 10)px; z-index: @(10 - idx);">
+                }
+            </div>
+            <div class="text-center mt-3">
+                <span class="badge bg-warning text-dark fs-6">
+                    <i class="bi bi-collection"></i> Series: @Model.Recommendation.Items.Count Books
+                </span>
+            </div>
+        }
+        else if (firstBook != null)
+        {
+            <img src="@(firstBook.ThumbnailUrl ?? "/images/no-cover.png")" 
+                 alt="@firstBook.Title" 
+                 class="img-fluid rounded shadow w-100" 
+                 style="max-height: 400px; object-fit: contain;">
+        }
+        
+        <!-- Like Button -->
+        <div class="d-grid gap-2 mt-4">
+            <button class="btn btn-outline-primary btn-lg" onclick="likeRecommendation(@Model.Recommendation.Id)" id="likeBtn">
+                <i class="bi bi-hand-thumbs-up"></i> 
+                <span id="likeCount">@Model.Recommendation.Likes</span> Like@(Model.Recommendation.Likes == 1 ? "" : "s")
+            </button>
+            
+            <!-- Progress Bar for async operations -->
+            <div id="progress-container" class="mb-2 d-none">
+                <h6 id="progress-status" class="text-muted small">Processing...</h6>
+                <div class="progress" role="progressbar" aria-label="Operation Progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="height: 20px;">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%">0%</div>
+                </div>
+            </div>
+            
+            <!-- Refresh Metadata Button -->
+            <button class="btn btn-outline-secondary" onclick="refreshMetadata(@Model.Recommendation.Id)" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise" id="refreshIcon"></i> 
+                <span id="refreshText">Refresh Book Data</span>
+            </button>
+            
+            <!-- Discover Series Button (only for series) -->
+            @if (isSeries)
+            {
+                <button type="button" class="btn btn-success w-100" onclick="discoverSeries(@Model.Recommendation.Id)" id="discoverBtn" title="Automatically find and add all books in this series from Goodreads">
+                    <i class="bi bi-search" id="discoverIcon"></i> <span id="discoverText">Auto-Discover Series Books</span>
+                </button>
+            }
+            
+            <!-- Chat Button -->
+            <button class="btn btn-outline-secondary" onclick="openComments(this)" 
+                    data-id="@Model.Recommendation.Id" 
+                    data-title="@Model.Recommendation.Title">
+                <i class="bi bi-chat-text"></i> Chat
+            </button>
+            
+            <a asp-page="/Edit" asp-route-id="@Model.Recommendation.Id" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil"></i> Edit Details
+            </a>
+        </div>
+    </div>
+
+    <!-- Right Column: Details -->
+    <div class="col-md-8">
+        <h1 class="mb-2">@Model.Recommendation.Title</h1>
+        
+        @if (!isSeries && firstBook != null)
+        {
+            <h4 class="text-muted mb-3">by @firstBook.Authors</h4>
+        }
+
+        <!-- Metadata Badges -->
+        <div class="mb-3">
+            @if (!isSeries && firstBook != null)
+            {
+                // Core Badges
+                if (firstBook.PageCount > 0) { <span class="badge bg-secondary me-2"><i class="bi bi-book"></i> @firstBook.PageCount pages</span> }
+                if (!string.IsNullOrEmpty(firstBook.Publisher)) { <span class="badge bg-secondary me-2"><i class="bi bi-building"></i> @firstBook.Publisher</span> }
+                if (!string.IsNullOrEmpty(firstBook.PublishedDate)) { <span class="badge bg-secondary me-2"><i class="bi bi-calendar"></i> @firstBook.PublishedDate</span> }
+                if (!string.IsNullOrEmpty(firstBook.Narrator)) { <span class="badge bg-info text-dark me-2"><i class="bi bi-mic"></i> @firstBook.Narrator</span> }
+                if (!string.IsNullOrEmpty(firstBook.ListeningLength)) { <span class="badge bg-info text-dark me-2"><i class="bi bi-clock"></i> @firstBook.ListeningLength</span> }
+                
+                // Extra CSV Fields
+                if (!string.IsNullOrEmpty(firstBook.AverageRating)) { <span class="badge bg-warning text-dark me-2"><i class="bi bi-star-fill"></i> @firstBook.AverageRating (@(firstBook.RatingCount ?? "0"))</span> }
+                if (!string.IsNullOrEmpty(firstBook.Language)) { <span class="badge bg-secondary me-2">@firstBook.Language</span> }
+            }
+            
+            @if (!string.IsNullOrEmpty(firstBook?.Categories))
+            {
+                @foreach (var cat in firstBook.Categories.Split(',').Take(3))
+                {
+                    var displayCat = cat.Split(':').Last().Trim();
+                    <span class="badge bg-info text-dark me-1">@displayCat</span>
+                }
+            }
+        </div>
+
+        @if (!isSeries && firstBook != null)
+        {
+            <!-- Extended Details Table -->
+            <div class="card mb-4">
+                <div class="card-header">
+                     <i class="bi bi-info-circle"></i> Item Details
+                </div>
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Authors</span> <span>@firstBook.Authors</span>
+                    </li>
+                    @if(!string.IsNullOrEmpty(firstBook.Publisher)) {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Publisher</span> <span>@firstBook.Publisher</span>
+                    </li> }
+                    @if(!string.IsNullOrEmpty(firstBook.PurchaseDate)) {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Purchased</span> <span>@firstBook.PurchaseDate</span>
+                    </li> }
+                    @if(!string.IsNullOrEmpty(firstBook.Asin)) {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">ASIN</span> <span class="font-monospace">@firstBook.Asin</span>
+                    </li> }
+                    @if(!string.IsNullOrEmpty(firstBook.ProductId)) {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Product ID</span> <span class="font-monospace">@firstBook.ProductId</span>
+                    </li> }
+                    @if(!string.IsNullOrEmpty(firstBook.Copyright)) {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Copyright</span> <span>@firstBook.Copyright</span>
+                    </li> }
+                </ul>
+            </div>
+        }
+        
+        <!-- Recommendation Info (Existing) -->
+
+        <!-- Recommendation Info -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
+                    <div>
+                        <strong>Recommended by @Model.Recommendation.RecommendedBy</strong>
+                        <br>
+                        <small class="text-muted">@Model.Recommendation.AddedAt.ToString("MMMM dd, yyyy")</small>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Recommendation.Note))
+                {
+                    <blockquote class="blockquote mt-3 mb-0">
+                        <p class="mb-0 fst-italic">"@Model.Recommendation.Note"</p>
+                    </blockquote>
+                }
+            </div>
+        </div>
+
+        @if (isSeries)
+        {
+            <!-- Series View -->
+            @if (!string.IsNullOrEmpty(Model.Recommendation.SeriesDescription))
+            {
+                <h5>About the Series</h5>
+                <p class="mb-0 fst-italic text-body">@Model.Recommendation.SeriesDescription</p>
+            }
+
+            <h5 class="mt-4 d-flex justify-content-between align-items-center">
+                <div>
+                    Reading Order
+                    <button class="btn btn-sm btn-outline-secondary ms-2" id="bulkEditToggle" onclick="toggleBulkEdit()">
+                        <i class="bi bi-check2-square"></i> Bulk Edit
+                    </button>
+                    <div class="form-check form-check-inline ms-3 d-none" id="selectAllContainer">
+                        <input class="form-check-input" type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                        <label class="form-check-label small" for="selectAllCheckbox">Select All</label>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-danger me-2 d-none" id="bulkRemoveBtn" onclick="confirmBulkRemove()">
+                        <i class="bi bi-trash"></i> Remove Selected (<span id="selectedCountRemove">0</span>)
+                    </button>
+                    <button class="btn btn-sm btn-success me-2 d-none" id="bulkEditBtn" data-bs-toggle="modal" data-bs-target="#bulkEditModal">
+                        <i class="bi bi-pencil-square"></i> Edit Selected (<span id="selectedCount">0</span>)
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                        <i class="bi bi-plus-lg"></i> Add Book
+                    </button>
+                </div>
+            </h5>
+            <div class="list-group" id="sortableSeriesList">
+                @foreach (var item in Model.Recommendation.Items)
+                {
+                    <div class="list-group-item list-group-item-action d-flex align-items-stretch justify-content-between p-0" data-id="@item.Id">
+                        <div class="bulk-checkbox-container d-none px-3 d-flex align-items-center">
+                            <input type="checkbox" class="form-check-input bulk-select-checkbox" value="@item.Id" onchange="updateBulkEditButton()">
+                        </div>
+                        <div class="handle px-2 d-flex align-items-center bg-light border-end" style="cursor:grab;">
+                            <i class="bi bi-grip-vertical text-muted"></i>
+                        </div>
+                        <div class="d-flex align-items-center flex-grow-1 p-3 book-item-link" 
+                             style="cursor:pointer"
+                             data-bs-toggle="modal" data-bs-target="#bookModal"
+                             data-title="@item.Title"
+                             data-authors="@item.Authors"
+                             data-thumbnail="@item.ThumbnailUrl"
+                             data-description="@item.Description"
+                             data-pagecount="@item.PageCount"
+                             data-publisher="@item.Publisher"
+                             data-publisheddate="@item.PublishedDate"
+                             data-categories="@item.Categories"
+                              data-volumeid="@item.GoogleVolumeId"
+                              data-narrator="@item.Narrator"
+                              data-length="@item.ListeningLength">
+                            <span class="badge bg-primary me-3 fs-6">@item.SeriesOrder</span>
+                            @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
+                            {
+                                <img src="@item.ThumbnailUrl" alt="" width="40" class="me-3 rounded">
+                            }
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">@item.Title</h6>
+                                <small class="text-muted">@item.Authors</small>
+                            </div>
+                        </div>
+                        <div class="pe-3 d-flex align-items-center gap-2">
+                            <a asp-page="/EditSeriesItem" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-outline-danger btn-sm remove-btn" onclick="removeBook(@item.Id, event)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (firstBook != null)
+        {
+            <!-- Single Book Description -->
+            <h5>Description</h5>
+            <p class="lead" style="white-space: pre-wrap;">@(firstBook.Description ?? "No description available.")</p>
+            
+            <!-- Buy Links for Single Book -->
+            <div class="mt-4">
+                <h5>Get This Book</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    @{
+                        var bookSearchQuery = Uri.EscapeDataString(firstBook.Title + " " + firstBook.Authors);
+                    }
+                    <a href="https://www.amazon.com/s?k=@bookSearchQuery&i=stripbooks" target="_blank" class="btn btn-warning">
+                        <i class="bi bi-cart"></i> Amazon
+                    </a>
+                    <a href="https://www.amazon.com/s?k=@bookSearchQuery&i=digital-text" target="_blank" class="btn btn-dark">
+                        <i class="bi bi-phone"></i> Kindle
+                    </a>
+                    <a href="https://www.audible.com/search?keywords=@bookSearchQuery" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-headphones"></i> Audible
+                    </a>
+                </div>
+            </div>
+        }
+
+        <a asp-page="/Index" class="btn btn-outline-secondary mt-4">
+            <i class="bi bi-arrow-left"></i> Back to Shelf
+        </a>
+    </div>
+</div>
+
+<!-- Book Details Modal (for series items) -->
+<div class="modal fade" id="bookModal" tabindex="-1" aria-labelledby="bookModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookModalLabel">Book Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img id="modalCover" src="" alt="" class="img-fluid rounded shadow" style="max-height: 250px;">
+                    </div>
+                    <div class="col-md-8">
+                        <h4 id="modalTitle"></h4>
+                        <h6 class="text-muted" id="modalAuthors"></h6>
+                        <div id="modalMeta" class="mb-3"></div>
+                        <p id="modalDescription" style="max-height: 150px; overflow-y: auto;"></p>
+                        
+                        <!-- Buy Links -->
+                        <div id="modalBuyLinks" class="mt-3">
+                            <p class="text-muted small mb-2">Buy this book:</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a id="amazonLink" href="#" target="_blank" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-cart"></i> Amazon
+                                </a>
+                                <a id="kindleLink" href="#" target="_blank" class="btn btn-sm btn-dark">
+                                    <i class="bi bi-phone"></i> Kindle
+                                </a>
+                                <a id="audibleLink" href="#" target="_blank" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-headphones"></i> Audible
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="~/js/chat.js"></script>
+    <script src="~/js/details-progress.js"></script>
+    <script>
+        // --- Drag and Drop Logic ---
+        document.addEventListener('DOMContentLoaded', function(e) {
+            const list = document.getElementById('sortableSeriesList');
+            if (list) {
+                new Sortable(list, {
+                    animation: 150,
+                    handle: '.handle',
+                    onEnd: function (evt) {
+                        const itemIds = Array.from(list.children).map(item => parseInt(item.dataset.id));
+                        // Send new order to server
+                        fetch('?handler=ReorderItems', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify(itemIds)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update badges
+                                Array.from(list.children).forEach((item, index) => {
+                                    item.querySelector('.badge').textContent = index + 1;
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+
+
+        // likeRecommendation logic moved to chat.js
+
+
+        function refreshMetadata(id) {
+            const btn = document.getElementById('refreshBtn');
+            const icon = document.getElementById('refreshIcon');
+            const text = document.getElementById('refreshText');
+            
+            // Show loading state
+            btn.disabled = true;
+            icon.classList.add('spin');
+            text.textContent = 'Fetching data...';
+            
+            fetch(`/Details/${id}?handler=RefreshMetadata`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    text.textContent = data.message;
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.classList.add('btn-success');
+                    
+                    // Reload page after short delay to show updated data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    text.textContent = 'Failed to refresh';
+                    btn.classList.add('btn-danger');
+                }
+            })
+            .catch(error => {
+                console.error('Refresh failed:', error);
+                text.textContent = 'Error refreshing data';
+                btn.classList.add('btn-danger');
+            })
+            .finally(() => {
+                icon.classList.remove('spin');
+                btn.disabled = false;
+            });
+        }
+
+        // Handle book item clicks using data attributes
+        document.querySelectorAll('.book-item-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Read data from data attributes (guaranteed to work)
+                const title = this.dataset.title || 'Unknown Title';
+                const authors = this.dataset.authors || 'Unknown Author';
+                const cover = this.dataset.thumbnail || '';
+                const description = this.dataset.description || 'No description available.';
+                const pageCount = this.dataset.pagecount;
+                const publisher = this.dataset.publisher;
+                const publishedDate = this.dataset.publisheddate;
+                const categories = this.dataset.categories;
+                const googleVolumeId = this.dataset.volumeid;
+                const narrator = this.dataset.narrator;
+                const length = this.dataset.length;
+
+                console.log('Book data from data attributes:', { title, authors, description, pageCount });
+
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalAuthors').textContent = 'by ' + authors;
+                document.getElementById('modalCover').src = cover || '/images/no-cover.png';
+                document.getElementById('modalDescription').innerHTML = description || '<em class="text-muted">No description available.</em>';
+                
+                let meta = '';
+                if (pageCount) meta += `<span class="badge bg-secondary me-2"><i class="bi bi-file-text"></i> ${pageCount} pages</span>`;
+                if (publisher) meta += `<span class="badge bg-secondary me-2"><i class="bi bi-building"></i> ${publisher}</span>`;
+                if (publishedDate) meta += `<span class="badge bg-secondary me-2"><i class="bi bi-calendar"></i> ${publishedDate}</span>`;
+                if (narrator) meta += `<span class="badge bg-info text-dark me-2"><i class="bi bi-mic"></i> ${narrator}</span>`;
+                if (length) meta += `<span class="badge bg-info text-dark me-2"><i class="bi bi-clock"></i> ${length}</span>`;
+                if (googleVolumeId) {
+                    if (googleVolumeId.startsWith('/works/') || googleVolumeId.startsWith('/books/')) {
+                        meta += `<a href="https://openlibrary.org${googleVolumeId}" target="_blank" class="badge bg-secondary text-decoration-none me-2"><i class="bi bi-book"></i> Open Library</a>`;
+                    } else if (!googleVolumeId.includes('-') || googleVolumeId.length < 20) { 
+                        // Rudimentary check: Google IDs are usually shorter alphanumeric, Guids are longer with dashes. 
+                        // Google IDs don't have dashes usually, but let's be safe.
+                        // Actually, let's just assume if it's not a path, it's a Google ID, unless it's a GUID.
+                        if (googleVolumeId.length < 30) { // Google IDs are ~12 chars
+                             meta += `<a href="https://books.google.com/books?id=${googleVolumeId}" target="_blank" class="badge bg-primary text-decoration-none me-2"><i class="bi bi-google"></i> Google Books</a>`;
+                        }
+                    }
+                }
+                if (categories) {
+                    categories.split(',').slice(0, 3).forEach(cat => {
+                        meta += `<span class="badge bg-info text-dark me-1">${cat.trim()}</span>`;
+                    });
+                }
+                document.getElementById('modalMeta').innerHTML = meta;
+
+                // Generate Amazon search links
+                const searchQuery = encodeURIComponent(title + ' ' + authors);
+                document.getElementById('amazonLink').href = `https://www.amazon.com/s?k=${searchQuery}&i=stripbooks`;
+                document.getElementById('kindleLink').href = `https://www.amazon.com/s?k=${searchQuery}&i=digital-text`;
+                document.getElementById('audibleLink').href = `https://www.audible.com/search?keywords=${searchQuery}`;
+            });
+        });
+    </script>
+    <script>
+        // --- Remove Book Logic ---
+        function removeBook(itemId, event) {
+            if (event) event.stopPropagation();
+            if (!confirm('Are you sure you want to remove this book from the series?')) return;
+
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+            fetch(`?handler=RemoveItem&itemId=${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to remove book.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred.');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            });
+        }
+
+        // --- Add Book Logic ---
+        let searchTimeout;
+        const searchInput = document.getElementById('searchBookInput');
+        const searchResults = document.getElementById('searchResults');
+        const spinner = document.getElementById('searchSpinner');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value;
+                
+                if (query.length < 2) {
+                    searchResults.innerHTML = '';
+                    spinner.classList.add('d-none');
+                    return;
+                }
+
+                spinner.classList.remove('d-none');
+
+                searchTimeout = setTimeout(() => {
+                    fetch(`/Add?handler=Search&q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(results => {
+                            searchResults.innerHTML = '';
+                            spinner.classList.add('d-none');
+
+                            results.forEach(book => {
+                                // .NET serializes to camelCase by default
+                                const title = book.title || '';
+                                const authors = book.authors || '';
+                                const thumbnail = book.thumbnailUrl || '';
+                                const categories = book.categories || '';
+                                
+                                const div = document.createElement('div');
+                                div.className = 'list-group-item d-flex gap-2 align-items-start';
+                                div.innerHTML = `
+                                    ${thumbnail ? `<img src="${thumbnail}" alt="cover" width="40" class="flex-shrink-0 rounded bg-secondary">` : '<div class="bg-secondary-subtle rounded d-flex align-items-center justify-content-center" style="width:40px;height:60px;"><i class="bi bi-book text-muted"></i></div>'}
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h6 class="mb-0 small fw-bold text-truncate">${escapeHtml(title)}</h6>
+                                        <p class="mb-0 small text-muted text-truncate">${escapeHtml(authors)}</p>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-success flex-shrink-0" onclick='addBookToSeries(${JSON.stringify(book).replace(/\'/g, "\\\'")})'>
+                                        Add
+                                    </button>
+                                `;
+                                searchResults.appendChild(div);
+                            });
+                            
+                            if (results.length === 0) {
+                                searchResults.innerHTML = '<div class="text-center text-muted p-3">No results found</div>';
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            spinner.classList.add('d-none');
+                        });
+                }, 500); // 500ms debounce
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function addBookToSeries(book) {
+            const btn = event.target;
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+            fetch(`?handler=AddItem&id=@Model.Recommendation.Id`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(book)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success feedback then reload
+                    btn.classList.remove('btn-outline-success');
+                    btn.classList.add('btn-success');
+                    btn.innerHTML = '<i class="bi bi-check"></i> Added';
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    alert('Failed to add book.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred.');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            });
+        }
+    </script>
+    <form asp-page-handler="Like" method="post" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+}
+
+@* Shared Chat Modal *@
+<partial name="_ChatModal" />
+
+<!-- Add Book Modal -->
+<div class="modal fade" id="addBookModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Book to Series</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3 sticky-top bg-white pt-2 pb-2" style="top:-1rem; z-index:10;">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" id="searchBookInput" placeholder="Search for book title...">
+                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('searchBookInput').value='';document.getElementById('searchResults').innerHTML='';">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="d-flex justify-content-center d-none my-3" id="searchSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <div id="searchResults" class="list-group list-group-flush">
+                    <!-- Results will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Edit Modal -->
+<div class="modal fade" id="bulkEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Bulk Edit Books</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="BulkEdit">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="bookIds" id="bulkEditBookIds" />
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Only fill in fields you want to update. Empty fields will be left unchanged.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Author(s)</label>
+                        <input type="text" class="form-control" name="authors" placeholder="Author name(s)">
+                        <small class="text-muted">Comma-separated for multiple authors</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Categories</label>
+                        <input type="text" class="form-control" name="categories" placeholder="e.g., Fiction, Fantasy, Science Fiction">
+                        <small class="text-muted">Comma-separated list</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Narrator</label>
+                        <input type="text" class="form-control" name="narrator" placeholder="Narrator name">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Publisher</label>
+                        <input type="text" class="form-control" name="publisher" placeholder="Publisher name">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Published Year</label>
+                        <input type="text" class="form-control" name="publishedYear" placeholder="YYYY">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Language</label>
+                        <input type="text" class="form-control" name="language" placeholder="e.g., en, es, fr">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>Update Selected Books
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let bulkEditMode = false;
+    
+    function toggleBulkEdit() {
+        bulkEditMode = !bulkEditMode;
+        const checkboxes = document.querySelectorAll('.bulk-checkbox-container');
+        const handles = document.querySelectorAll('.handle');
+        const toggle = document.getElementById('bulkEditToggle');
+        const selectAllContainer = document.getElementById('selectAllContainer');
+        
+        checkboxes.forEach(cb => {
+            if (bulkEditMode) {
+                cb.classList.remove('d-none');
+            } else {
+                cb.classList.add('d-none');
+                cb.querySelector('input').checked = false;
+            }
+        });
+        
+        handles.forEach(h => {
+            if (bulkEditMode) {
+                h.classList.add('d-none');
+            } else {
+                h.classList.remove('d-none');
+            }
+        });
+        
+        if (bulkEditMode) {
+            toggle.classList.remove('btn-outline-secondary');
+            toggle.classList.add('btn-secondary');
+            toggle.innerHTML = '<i class="bi bi-x-lg"></i> Cancel';
+            selectAllContainer.classList.remove('d-none');
+        } else {
+            toggle.classList.remove('btn-secondary');
+            toggle.classList.add('btn-outline-secondary');
+            toggle.innerHTML = '<i class="bi bi-check2-square"></i> Bulk Edit';
+            selectAllContainer.classList.add('d-none');
+            document.getElementById('selectAllCheckbox').checked = false;
+            document.getElementById('bulkEditBtn').classList.add('d-none');
+            document.getElementById('bulkRemoveBtn').classList.add('d-none');
+        }
+        
+        updateBulkEditButton();
+    }
+    
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAllCheckbox');
+        const checkboxes = document.querySelectorAll('.bulk-select-checkbox');
+        
+        checkboxes.forEach(cb => {
+            cb.checked = selectAll.checked;
+        });
+        
+        updateBulkEditButton();
+    }
+    
+    function updateBulkEditButton() {
+        const selected = document.querySelectorAll('.bulk-select-checkbox:checked');
+        const count = selected.length;
+        const editBtn = document.getElementById('bulkEditBtn');
+        const removeBtn = document.getElementById('bulkRemoveBtn');
+        const countSpan = document.getElementById('selectedCount');
+        const countSpanRemove = document.getElementById('selectedCountRemove');
+        
+        countSpan.textContent = count;
+        countSpanRemove.textContent = count;
+        
+        if (count > 0) {
+            editBtn.classList.remove('d-none');
+            removeBtn.classList.remove('d-none');
+            // Store selected IDs for form submission
+            const ids = Array.from(selected).map(cb => cb.value).join(',');
+            document.getElementById('bulkEditBookIds').value = ids;
+        } else {
+            editBtn.classList.add('d-none');
+            removeBtn.classList.add('d-none');
+        }
+    }
+    
+    function confirmBulkRemove() {
+        const selected = document.querySelectorAll('.bulk-select-checkbox:checked');
+        const count = selected.length;
+        
+        if (count === 0) return;
+        
+        if (confirm(`Are you sure you want to remove ${count} book(s) from this series?`)) {
+            const ids = Array.from(selected).map(cb => cb.value).join(',');
+            
+            // Create and submit form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '?handler=BulkRemove&id=@Model.Recommendation.Id';
+            
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]').cloneNode(true);
+            form.appendChild(tokenInput);
+            
+            const idsInput = document.createElement('input');
+            idsInput.type = 'hidden';
+            idsInput.name = 'bookIds';
+            idsInput.value = ids;
+            form.appendChild(idsInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>

@@ -1,0 +1,111 @@
+@page "{id:int}"
+@model OpenShelf.Pages.EditSeriesItemModel
+@{
+    ViewData["Title"] = "Edit Book in Series";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-3">
+                <a asp-page="./Details" asp-route-id="@Model.RecommendationId" class="text-decoration-none">
+                    <i class="bi bi-arrow-left"></i> Back to @Model.SeriesTitle
+                </a>
+            </div>
+            
+            <h1 class="mb-4">Edit Book in Series</h1>
+            
+            <form method="post" class="card shadow-sm">
+                <div class="card-body">
+                    <input type="hidden" asp-for="Item.Id" />
+                    
+                    <div class="mb-3">
+                        <label asp-for="Item.Title" class="form-label">Book Title</label>
+                        <input asp-for="Item.Title" class="form-control" required />
+                        <span asp-validation-for="Item.Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Item.Authors" class="form-label">Author(s)</label>
+                        <input asp-for="Item.Authors" class="form-control" required />
+                        <span asp-validation-for="Item.Authors" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Item.SeriesSequence" class="form-label">Series Order</label>
+                            <input asp-for="Item.SeriesSequence" class="form-control" placeholder="e.g., 1, 2.5, 3" />
+                            <div class="form-text">Book number in the series (can be decimal for novellas)</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Item.PublishedDate" class="form-label">Published Date</label>
+                            <input asp-for="Item.PublishedDate" class="form-control" placeholder="YYYY or YYYY-MM-DD" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Item.ThumbnailUrl" class="form-label">
+                            Cover Image URL
+                            <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" title="Paste a direct link to the book cover image"></i>
+                        </label>
+                        <input asp-for="Item.ThumbnailUrl" class="form-control" type="url" placeholder="https://..." />
+                        <div class="form-text">Direct link to the book cover image (right-click an image and "Copy Image Address")</div>
+                        @if (!string.IsNullOrEmpty(Model.Item?.ThumbnailUrl))
+                        {
+                            <div class="mt-2">
+                                <img src="@Model.Item.ThumbnailUrl" alt="Current cover" class="img-thumbnail" style="max-height: 200px;" />
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Item.Description" class="form-label">Description</label>
+                        <textarea asp-for="Item.Description" class="form-control" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Item.Categories" class="form-label">Categories</label>
+                            <input asp-for="Item.Categories" class="form-control" placeholder="Fantasy, Sci-Fi, etc." />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Item.Publisher" class="form-label">Publisher</label>
+                            <input asp-for="Item.Publisher" class="form-control" />
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Item.PageCount" class="form-label">Page Count</label>
+                            <input asp-for="Item.PageCount" class="form-control" type="number" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Item.Narrator" class="form-label">Narrator (Audio)</label>
+                            <input asp-for="Item.Narrator" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Item.ListeningLength" class="form-label">Duration (Audio)</label>
+                            <input asp-for="Item.ListeningLength" class="form-control" placeholder="10 hrs 30 mins" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a asp-page="./Details" asp-route-id="@Model.RecommendationId" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Enable Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+}

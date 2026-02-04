@@ -1,0 +1,109 @@
+@page "{id:int}"
+@model OpenShelf.Pages.EditModel
+@{
+    ViewData["Title"] = "Edit Recommendation";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">Edit Recommendation</h1>
+            
+            <form method="post" class="card shadow-sm">
+                <div class="card-body">
+                    <input type="hidden" asp-for="Recommendation.Id" />
+                    <input type="hidden" asp-for="Format" />
+                    
+                    <h5 class="card-title mb-3 text-secondary">General Info</h5>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Recommendation.Title" class="form-label">Title / Series Name</label>
+                        <input asp-for="Recommendation.Title" class="form-control" />
+                        <span asp-validation-for="Recommendation.Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Recommendation.RecommendedBy" class="form-label">Recommended By</label>
+                            <input asp-for="Recommendation.RecommendedBy" class="form-control" />
+                            <span asp-validation-for="Recommendation.RecommendedBy" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                         <label asp-for="Recommendation.Note" class="form-label">Personal Note / Review</label>
+                         <textarea asp-for="Recommendation.Note" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    @if (Model.Recommendation.IsSeries)
+                    {
+                        <div class="mb-3">
+                             <label asp-for="Recommendation.SeriesDescription" class="form-label">Series Description</label>
+                             <textarea asp-for="Recommendation.SeriesDescription" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="alert alert-info">
+                            Individual books in the series cannot be edited here fully yet.
+                        </div>
+                    }
+                    else if (Model.FirstItem != null)
+                    {
+                        <hr class="my-4" />
+                        <h5 class="card-title mb-3 text-secondary">Book Details</h5>
+                        <input type="hidden" asp-for="FirstItem.Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="FirstItem.Authors" class="form-label">Author(s)</label>
+                            <input asp-for="FirstItem.Authors" class="form-control" />
+                        </div>
+                        
+                        <div class="mb-3">
+                             <label asp-for="FirstItem.Title" class="form-label">Book Title (if different)</label>
+                             <input asp-for="FirstItem.Title" class="form-control" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstItem.Categories" class="form-label">Categories (comma sep)</label>
+                                <input asp-for="FirstItem.Categories" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstItem.PublishedDate" class="form-label">Published Date</label>
+                                <input asp-for="FirstItem.PublishedDate" class="form-control" />
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                             <label asp-for="FirstItem.Description" class="form-label">Description</label>
+                             <textarea asp-for="FirstItem.Description" class="form-control" rows="4"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstItem.Narrator" class="form-label">Narrator (Audio)</label>
+                                <input asp-for="FirstItem.Narrator" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstItem.ListeningLength" class="form-label">Duration (Audio)</label>
+                                <input asp-for="FirstItem.ListeningLength" class="form-control" />
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="FirstItem.ThumbnailUrl" class="form-label">Cover Image URL</label>
+                            <input asp-for="FirstItem.ThumbnailUrl" class="form-control" />
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a asp-page="./Details" asp-route-id="@Model.Recommendation.Id" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,39 @@
+<div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Comments: <span id="commentModalTitle" class="fw-bold fs-6"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="row g-0 h-100">
+                    <!-- Left: Comments List -->
+                    <div class="col-md-7 border-end">
+                        <div id="commentsList" class="p-3" style="min-height: 300px;">
+                            <div class="text-center text-muted"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</div>
+                        </div>
+                    </div>
+                    <!-- Right: Add Form -->
+                    <div class="col-md-5 bg-light">
+                        <div class="p-3 sticky-top">
+                            <h6 class="fw-bold mb-3">Add a Comment</h6>
+                            <form id="addCommentForm">
+                                <input type="hidden" id="commentRecId" name="RecommendationId" />
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Your Name (Optional)</label>
+                                    <input type="text" class="form-control form-control-sm" id="commentAuthor" name="Author" placeholder="Anonymous" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Comment</label>
+                                    <textarea class="form-control form-control-sm" id="commentText" name="Text" rows="4" required placeholder="Type your comment..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Post Comment</button>
+                                @Html.AntiForgeryToken()
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

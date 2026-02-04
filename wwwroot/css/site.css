@@ -1,0 +1,392 @@
+/* Modern Warm Design System - Open Shelf
+   Rewritten 2026-02-02 to ensure perfect dark mode compatibility via Bootstrap 5.3 variables.
+*/
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+    /* -------------------------------------------
+       1. Base Palette Configuration (Light Mode)
+       ------------------------------------------- */
+    --app-font-heading: 'Merriweather', serif;
+    --app-font-body: 'Inter', sans-serif;
+
+    /* Colors */
+    --app-bg: #FDFBF7;
+    --app-surface: #FFFFFF;
+    --app-surface-subtle: #F4F1EA;
+    --app-text: #2C2420;
+    --app-text-muted: #5D5550;
+    --app-border: #E6E2D8;
+
+    --app-primary: #A65D57;
+    /* Terra Cotta */
+    --app-secondary: #D4A373;
+    /* Warm Sand */
+    --app-success: #6B705C;
+    /* Olive */
+
+    /* Shadows */
+    --app-shadow: 0 4px 20px rgba(44, 36, 32, 0.08);
+
+    /* -------------------------------------------
+       2. Map to Bootstrap Variables (Theming)
+       ------------------------------------------- */
+    --bs-body-font-family: var(--app-font-body);
+    --bs-body-color: var(--app-text);
+    --bs-body-bg: var(--app-bg);
+    --bs-secondary-color: var(--app-text-muted);
+    /* Maps text-body-secondary */
+    --bs-border-color: var(--app-border);
+    --bs-primary: var(--app-primary);
+    --bs-primary-rgb: 166, 93, 87;
+    --bs-link-color: var(--app-primary);
+    --bs-link-hover-color: var(--app-secondary);
+}
+
+/* -------------------------------------------
+   3. Dark Mode Configuration
+   ------------------------------------------- */
+
+/* Shared Dark Mode Variables */
+/* Note: We duplicate this block for @media and [data-theme] selectors because CSS nesting/mixins aren't standard here */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        /* Colors - High Legibility Dark Mode */
+        --app-bg: #121212;
+        /* Deep Black/Grey */
+        --app-surface: #1E1E1E;
+        --app-surface-subtle: #2A2A2A;
+
+        --app-text: #F2F0EA;
+        /* Cream White - High Contrast */
+        --app-text-muted: #D0C8C4;
+        /* Light Warm Grey - High Legibility */
+        --app-border: #333333;
+
+        --app-primary: #E08E89;
+        /* Lighter Terra Cotta */
+        --app-secondary: #EBC8A8;
+        /* Lighter Sand */
+        --app-success: #A3A88B;
+
+        --app-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+
+        /* Re-Map Bootstrap Variables for Dark Mode */
+        --bs-body-color: var(--app-text);
+        --bs-body-bg: var(--app-bg);
+        --bs-secondary-color: var(--app-text-muted);
+        --bs-secondary-bg: var(--app-surface-subtle);
+        --bs-border-color: var(--app-border);
+        --bs-primary: var(--app-primary);
+        --bs-link-color: var(--app-primary);
+        --bs-link-hover-color: var(--app-secondary);
+        --bs-dark: #f8f9fa;
+        /* Invert "text-dark" */
+        --bs-light: #212529;
+        /* Invert "text-light" */
+        --bs-heading-color: var(--app-text);
+        --bs-body-bg-rgb: 18, 18, 18;
+    }
+}
+
+[data-theme="dark"] {
+    /* Colors - High Legibility Dark Mode */
+    --app-bg: #121212;
+    /* Deep Black/Grey */
+    --app-surface: #1E1E1E;
+    --app-surface-subtle: #2A2A2A;
+
+    --app-text: #F2F0EA;
+    /* Cream White - High Contrast */
+    --app-text-muted: #D0C8C4;
+    /* Light Warm Grey - High Legibility */
+    --app-border: #333333;
+
+    --app-primary: #E08E89;
+    /* Lighter Terra Cotta */
+    --app-secondary: #EBC8A8;
+    /* Lighter Sand */
+    --app-success: #A3A88B;
+
+    --app-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+
+    /* Re-Map Bootstrap Variables for Dark Mode */
+    --bs-body-color: var(--app-text);
+    --bs-body-bg: var(--app-bg);
+    --bs-secondary-color: var(--app-text-muted);
+    --bs-secondary-bg: var(--app-surface-subtle);
+    --bs-border-color: var(--app-border);
+    --bs-primary: var(--app-primary);
+    --bs-link-color: var(--app-primary);
+    --bs-link-hover-color: var(--app-secondary);
+    --bs-dark: #f8f9fa;
+    /* Invert "text-dark" */
+    --bs-light: #212529;
+    /* Invert "text-light" */
+    --bs-heading-color: var(--app-text);
+    --bs-body-bg-rgb: 18, 18, 18;
+}
+
+/* -------------------------------------------
+   4. Global Resets & Typography
+   ------------------------------------------- */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.navbar-brand {
+    font-family: var(--app-font-heading);
+}
+
+/* -------------------------------------------
+   5. Component Styling
+   ------------------------------------------- */
+
+/* Navbar - Force cleaner look */
+.navbar {
+    background-color: var(--app-surface) !important;
+    border-bottom: 1px solid var(--app-border) !important;
+    box-shadow: var(--app-shadow) !important;
+}
+
+.navbar-brand {
+    color: var(--app-primary) !important;
+    font-weight: 700;
+}
+
+.nav-link {
+    color: var(--app-text-muted) !important;
+    font-weight: 500;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--app-primary) !important;
+}
+
+/* Cards */
+.card {
+    background-color: var(--app-surface);
+    border-color: var(--app-border);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    box-shadow: var(--app-shadow);
+}
+
+.card-header {
+    background-color: var(--app-surface-subtle);
+    border-bottom-color: var(--app-border);
+    color: var(--app-text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Inputs & Modals - Vital for Dark Mode */
+.form-control,
+.form-select,
+.modal-content,
+.dropdown-menu {
+    background-color: var(--app-surface);
+    border-color: var(--app-border);
+    color: var(--app-text);
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--app-surface);
+    color: var(--app-text);
+    border-color: var(--app-secondary);
+    box-shadow: 0 0 0 0.25rem rgba(212, 163, 115, 0.25);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--app-secondary);
+    border-color: var(--app-secondary);
+}
+
+.btn-success {
+    background-color: var(--app-success);
+    border-color: var(--app-success);
+    color: #FFFFFF;
+}
+
+.btn-success:hover {
+    background-color: #5A5E4D;
+    border-color: #5A5E4D;
+}
+
+.btn-info {
+    background-color: #8B7355;
+    border-color: #8B7355;
+    color: #FFFFFF;
+}
+
+.btn-info:hover {
+    background-color: #6F5C45;
+    border-color: #6F5C45;
+}
+
+.btn-warning {
+    background-color: #D4A373;
+    border-color: #D4A373;
+    color: #2C2420;
+}
+
+.btn-warning:hover {
+    background-color: #C18F5E;
+    border-color: #C18F5E;
+}
+
+.btn-outline-primary {
+    color: var(--app-primary);
+    border-color: var(--app-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+    color: #FFFFFF;
+}
+
+.btn-outline-secondary {
+    color: var(--app-text-muted);
+    border-color: var(--app-border);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--app-surface-subtle);
+    color: var(--app-text);
+}
+
+/* Badges */
+.badge.bg-info {
+    background-color: #8B7355 !important;
+    color: #FFFFFF !important;
+}
+
+.badge.bg-success {
+    background-color: var(--app-success) !important;
+    color: #FFFFFF !important;
+}
+
+.badge.bg-warning {
+    background-color: #D4A373 !important;
+    color: #2C2420 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #9B8B7E !important;
+    color: #FFFFFF !important;
+}
+
+/* Alerts */
+.alert-success {
+    background-color: rgba(107, 112, 92, 0.15);
+    border-color: var(--app-success);
+    color: var(--app-success);
+}
+
+.alert-info {
+    background-color: rgba(139, 115, 85, 0.15);
+    border-color: #8B7355;
+    color: #8B7355;
+}
+
+.alert-warning {
+    background-color: rgba(212, 163, 115, 0.15);
+    border-color: #D4A373;
+    color: #A67C4B;
+}
+
+/* Card Header Variants */
+.card-header.bg-warning-subtle {
+    background-color: rgba(212, 163, 115, 0.2) !important;
+}
+
+.card-header.bg-primary-subtle {
+    background-color: rgba(166, 93, 87, 0.2) !important;
+}
+
+.card-header.bg-info {
+    background-color: #8B7355 !important;
+    color: #FFFFFF !important;
+}
+
+.card-header.bg-success {
+    background-color: var(--app-success) !important;
+    color: #FFFFFF !important;
+}
+
+/* List Groups */
+.list-group-item {
+    background-color: var(--app-surface);
+    border-color: var(--app-border);
+    color: var(--app-text);
+}
+
+.list-group-item-action:hover {
+    background-color: var(--app-surface-subtle);
+    color: var(--app-text);
+}
+
+/* Footer */
+footer {
+    background-color: var(--app-surface) !important;
+    border-top: 1px solid var(--app-border) !important;
+    color: var(--app-text-muted) !important;
+}
+
+/* Utilities Redefinition */
+.text-muted {
+    color: var(--app-text-muted) !important;
+}
+
+.text-dark {
+    color: #212529 !important;
+}
+
+/* Force black for badges */
+.bg-light {
+    background-color: var(--app-surface-subtle) !important;
+}
+
+/* Invert icons/logos for dark mode if needed */
+[data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+}
+
+/* Spin Animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}

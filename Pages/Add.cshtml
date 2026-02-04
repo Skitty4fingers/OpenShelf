@@ -1,0 +1,328 @@
+@page
+@model OpenShelf.Pages.AddModel
+@{
+    ViewData["Title"] = "Add Recommendation";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-page="/Index">Shelf</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Add Recommendation</li>
+            </ol>
+        </nav>
+
+        <h2 class="mb-4">Add a New Recommendation</h2>
+
+        <div class="row g-4">
+            <!-- Left Column: Search -->
+            <div class="col-md-6">
+                <div class="card h-100 bg-light border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-search"></i> Find Books</h5>
+                        <p class="text-muted small">Start typing to search. Results appear automatically.</p>
+                        
+                        <!-- Live Search Input -->
+                        <div class="position-relative mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" 
+                                       id="searchInput" 
+                                       class="form-control form-control-lg" 
+                                       placeholder="Search by title, author, or series..."
+                                       autocomplete="off">
+                                <button type="button" class="btn btn-outline-secondary" id="clearSearch" style="display: none;">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <div id="searchSpinner" class="position-absolute end-0 top-50 translate-middle-y me-5" style="display: none;">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Searching...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Results -->
+                        <div id="searchResults" class="list-group list-group-flush" style="max-height: 450px; overflow-y: auto;">
+                            <div id="searchPlaceholder" class="text-center py-4 text-muted">
+                                <i class="bi bi-book display-4 opacity-50"></i>
+                                <p class="mt-2">Type at least 2 characters to search</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Right Column: Bundle & Form -->
+            <div class="col-md-6">
+                <!-- Bundle View -->
+                <div class="card mb-4 border-primary">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold"><i class="bi bi-collection"></i> Your Selection</span>
+                        <span class="badge bg-white text-primary" id="bundleCount">0 Books</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="emptyBundleState" class="text-center py-5 text-muted">
+                            <i class="bi bi-book display-4 opacity-50"></i>
+                            <p class="mt-2">Search and add books to start.</p>
+                        </div>
+                        <ul class="list-group list-group-flush" id="bundleList">
+                            <!-- Items added via JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Final Form -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Recommendation Details</h5>
+                        <form method="post" id="mainForm" asp-page-handler="Save">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            
+                            <!-- Hidden inputs for bundle items will be generated here -->
+                            <div id="hiddenInputsContainer"></div>
+
+                            <div class="mb-3">
+                                <label asp-for="Recommendation.Title" class="form-label">Title (Series or Book Name)</label>
+                                <input asp-for="Recommendation.Title" class="form-control" id="recommendationTitle" required placeholder="e.g. 'Harry Potter Series' or 'The Hobbit'" />
+                                <span asp-validation-for="Recommendation.Title" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Recommendation.Note" class="form-label">Why do you recommend this?</label>
+                                <textarea asp-for="Recommendation.Note" class="form-control" rows="3" placeholder="Share your thoughts..."></textarea>
+                                <span asp-validation-for="Recommendation.Note" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Recommendation.RecommendedBy" class="form-label">Recommended By (Your Name)</label>
+                                <input asp-for="Recommendation.RecommendedBy" class="form-control" required />
+                                <span asp-validation-for="Recommendation.RecommendedBy" class="text-danger"></span>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg" id="submitBtn" disabled>Save Recommendation</button>
+                                <a asp-page="Index" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        let bundle = [];
+
+        function addToBundle(book) {
+            // Check duplicates
+            if (bundle.some(b => b.id === book.id)) {
+                alert("Book already in bundle!");
+                return;
+            }
+            
+            bundle.push(book);
+            renderBundle();
+        }
+
+        function removeFromBundle(index) {
+            bundle.splice(index, 1);
+            renderBundle();
+        }
+
+        function renderBundle() {
+            const list = document.getElementById('bundleList');
+            const emptyState = document.getElementById('emptyBundleState');
+            const count = document.getElementById('bundleCount');
+            const submitBtn = document.getElementById('submitBtn');
+            const titleInput = document.getElementById('recommendationTitle');
+
+            list.innerHTML = '';
+            
+            if (bundle.length === 0) {
+                emptyState.style.display = 'block';
+                submitBtn.disabled = true;
+            } else {
+                emptyState.style.display = 'none';
+                submitBtn.disabled = false;
+                
+                // Auto-fill title if it's the first book and title is empty
+                if (bundle.length === 1 && !titleInput.value) {
+                    titleInput.value = bundle[0].title;
+                }
+            }
+
+            count.textContent = bundle.length + (bundle.length === 1 ? ' Book' : ' Books');
+
+            bundle.forEach((book, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                        ${book.thumbnailUrl ? `<img src="${book.thumbnailUrl}" width="30" class="rounded">` : ''}
+                        <div class="text-truncate">
+                            <span class="fw-bold d-block text-truncate" style="max-width: 200px;">${book.title}</span>
+                            <small class="text-muted">${book.authors}</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm text-danger" onclick="removeFromBundle(${index})">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+
+            updateHiddenInputs();
+        }
+
+        function updateHiddenInputs() {
+            const container = document.getElementById('hiddenInputsContainer');
+            container.innerHTML = '';
+
+            bundle.forEach((book, index) => {
+                // Generate hidden inputs binding to BookItems[index]
+                container.innerHTML += `
+                    <input type="hidden" name="BookItems[${index}].Title" value="${escapeHtml(book.title)}" />
+                    <input type="hidden" name="BookItems[${index}].Authors" value="${escapeHtml(book.authors)}" />
+                    <input type="hidden" name="BookItems[${index}].ThumbnailUrl" value="${escapeHtml(book.thumbnailUrl || '')}" />
+                    <input type="hidden" name="BookItems[${index}].GoogleVolumeId" value="${escapeHtml(book.id)}" />
+                    <input type="hidden" name="BookItems[${index}].Description" value="${escapeHtml(book.fullDescription || book.description || '')}" />
+                    <input type="hidden" name="BookItems[${index}].PageCount" value="${book.pageCount || ''}" />
+                    <input type="hidden" name="BookItems[${index}].Categories" value="${escapeHtml(book.categories || '')}" />
+                    <input type="hidden" name="BookItems[${index}].Publisher" value="${escapeHtml(book.publisher || '')}" />
+                    <input type="hidden" name="BookItems[${index}].PublishedDate" value="${escapeHtml(book.publishedDate || '')}" />
+                    <input type="hidden" name="BookItems[${index}].SeriesOrder" value="${index + 1}" />
+                `;
+            });
+        }
+
+        function escapeHtml(text) {
+             if (!text) return "";
+             return text
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
+        // ===== LIVE SEARCH FUNCTIONALITY =====
+        let searchTimeout = null;
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const searchSpinner = document.getElementById('searchSpinner');
+        const clearSearch = document.getElementById('clearSearch');
+        const searchPlaceholder = document.getElementById('searchPlaceholder');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            // Show/hide clear button
+            clearSearch.style.display = query ? 'block' : 'none';
+            
+            // Clear previous timeout
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            // Require minimum 2 characters
+            if (query.length < 2) {
+                searchResults.innerHTML = '';
+                searchResults.appendChild(searchPlaceholder);
+                searchPlaceholder.style.display = 'block';
+                return;
+            }
+            
+            // Debounce: wait 300ms after typing stops
+            searchTimeout = setTimeout(() => performSearch(query), 300);
+        });
+
+        clearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            clearSearch.style.display = 'none';
+            searchResults.innerHTML = '';
+            searchResults.appendChild(searchPlaceholder);
+            searchPlaceholder.style.display = 'block';
+            searchInput.focus();
+        });
+
+        async function performSearch(query) {
+            searchSpinner.style.display = 'block';
+            searchPlaceholder.style.display = 'none';
+            
+            try {
+                const response = await fetch(`/Add?handler=Search&q=${encodeURIComponent(query)}`);
+                const results = await response.json();
+                
+                searchResults.innerHTML = '';
+                
+                if (results.length === 0) {
+                    searchResults.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-search display-4 opacity-50"></i>
+                            <p class="mt-2">No books found for "${escapeHtml(query)}"</p>
+                            <p class="small">Try a different search term</p>
+                        </div>
+                    `;
+                } else {
+                    results.forEach(book => {
+                        // .NET serializes to camelCase by default
+                        const title = book.title || '';
+                        const authors = book.authors || '';
+                        const thumbnail = book.thumbnailUrl || '';
+                        const categories = book.categories || '';
+                        
+                        const div = document.createElement('div');
+                        div.className = 'list-group-item d-flex gap-2 align-items-start bg-transparent';
+                        div.innerHTML = `
+                            ${thumbnail ? `<img src="${thumbnail}" alt="cover" width="40" class="flex-shrink-0 rounded bg-secondary">` : '<div class="bg-secondary-subtle rounded d-flex align-items-center justify-content-center" style="width:40px;height:60px;"><i class="bi bi-book text-muted"></i></div>'}
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h6 class="mb-0 small fw-bold text-truncate">${escapeHtml(title)}</h6>
+                                <p class="mb-0 small text-muted text-truncate">${escapeHtml(authors)}</p>
+                                <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
+                                    ${categories ? `<span class="badge bg-light text-secondary border small">${escapeHtml(categories.split(',')[0])}</span>` : ''}
+                                    ${book.publishedDate ? `<span class="badge bg-light text-secondary border small"><i class="bi bi-calendar"></i> ${escapeHtml(book.publishedDate.substring(0,4))}</span>` : ''}
+                                    ${book.language ? `<span class="badge bg-light text-secondary border small text-uppercase">${escapeHtml(book.language)}</span>` : ''}
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success flex-shrink-0" onclick='addToBundleFromSearch(${JSON.stringify(book).replace(/'/g, "\\'")})'>
+                                <i class="bi bi-plus"></i> Add
+                            </button>
+                        `;
+                        searchResults.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                console.error('Search failed:', error);
+                searchResults.innerHTML = `
+                    <div class="alert alert-danger">Search failed. Please try again.</div>
+                `;
+            } finally {
+                searchSpinner.style.display = 'none';
+            }
+        }
+
+        function addToBundleFromSearch(book) {
+            // Book properties are already camelCase from .NET serialization
+            const normalizedBook = {
+                id: book.id,
+                title: book.title,
+                authors: book.authors,
+                thumbnailUrl: book.thumbnailUrl,
+                description: book.description,
+                fullDescription: book.fullDescription,
+                pageCount: book.pageCount,
+                categories: book.categories,
+                publisher: book.publisher,
+                publishedDate: book.publishedDate
+            };
+            addToBundle(normalizedBook);
+        }
+
+        // Focus search input on page load
+        searchInput.focus();
+    </script>
+}

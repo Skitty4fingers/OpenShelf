@@ -1,0 +1,139 @@
+@page
+@model OpenShelf.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-people"></i> Manage Admin Users</h1>
+    <a asp-page="/Admin/Index" class="btn btn-outline-secondary">Back to Admin</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-@Model.MessageType alert-dismissible fade show" role="alert">
+        @Model.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-plus"></i> Add New Admin User</span>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="AddUser">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="newUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="newUsername" name="newUsername" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_]+" title="Alphanumeric and underscore only">
+                </div>
+                <div class="col-md-4">
+                    <label for="newPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="8">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-plus-circle"></i> Add User
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <i class="bi bi-list"></i> Admin Users (@Model.Users.Count)
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Created</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@user.Username</strong>
+                                @if (user.Username == User.Identity?.Name)
+                                {
+                                    <span class="badge bg-primary ms-2">You</span>
+                                }
+                            </td>
+                            <td>@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                            <td>
+                                @if (user.LastLoginAt.HasValue)
+                                {
+                                    @user.LastLoginAt.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Never</span>
+                                }
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-warning" onclick="showResetPassword(@user.Id, '@user.Username')">
+                                    <i class="bi bi-key"></i> Reset Password
+                                </button>
+                                @if (user.Username != User.Identity?.Name)
+                                {
+                                    <form method="post" asp-page-handler="DeleteUser" asp-route-userId="@user.Id" class="d-inline" onsubmit="return confirm('Are you sure you want to delete user @user.Username? This cannot be undone.');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="ResetPassword">
+                <div class="modal-body">
+                    <input type="hidden" id="resetUserId" name="userId" />
+                    <p>Reset password for user: <strong id="resetUsername"></strong></p>
+                    <div class="mb-3">
+                        <label for="newPasswordReset" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPasswordReset" name="newPassword" required minlength="8">
+                        <div class="form-text">Minimum 8 characters</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showResetPassword(userId, username) {
+            document.getElementById('resetUserId').value = userId;
+            document.getElementById('resetUsername').textContent = username;
+            var modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+            modal.show();
+        }
+    </script>
+}

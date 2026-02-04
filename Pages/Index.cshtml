@@ -1,0 +1,464 @@
+@page
+@model OpenShelf.Pages.IndexModel
+@{
+    ViewData["Title"] = "Shelf";
+}
+
+<div class="text-center mb-4">
+    <h1 class="display-4 fw-bold">
+        <i class="bi bi-book-half me-3" style="color: #a65d57;"></i><span style="color: #a65d57;">Open</span> <span style="color: #c9a66b;">Shelf</span>
+    </h1>
+    <p class="lead">Shared Book Recommendations</p>
+    <a asp-page="/Add" class="btn btn-lg btn-success shadow-sm">
+        <i class="bi bi-plus-circle me-2"></i> Add Recommendation
+    </a>
+    <a asp-page="/Import" class="btn btn-lg btn-outline-secondary shadow-sm ms-2">
+        <i class="bi bi-upload me-2"></i> Import CSV
+    </a>
+    
+    @if (User.Identity.IsAuthenticated)
+    {
+        <a asp-page="/Admin/Index" class="btn btn-lg btn-warning shadow-sm ms-2">
+            <i class="bi bi-speedometer2 me-2"></i> Admin
+        </a>
+    }
+</div>
+
+<!-- Highlight Section -->
+@if (Model.HighestRatedRecommendation != null || Model.StaffPickRecommendation != null)
+{
+    <div class="row mb-4 g-4 justify-content-center">
+        @if (Model.HighestRatedRecommendation != null)
+        {
+            var rec = Model.HighestRatedRecommendation;
+            var item = rec.Items.OrderBy(i => i.SeriesOrder ?? 999).FirstOrDefault(); 
+            var bestItem = item; // Use the first item (series or otherwise) as the visual
+
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm" style="background-color: rgba(22, 163, 115, 0.1);"> <!-- Earthy accent -->
+                    <div class="card-body d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                             @if (bestItem != null && !string.IsNullOrEmpty(bestItem.ThumbnailUrl))
+                            {
+                                <img src="@bestItem.ThumbnailUrl" class="rounded shadow-sm" alt="@bestItem.Title" style="width: 100px; height: 150px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="bg-secondary-subtle rounded d-flex align-items-center justify-content-center" style="width: 100px; height: 150px;">
+                                    <i class="bi bi-book opacity-50 display-6"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-uppercase fw-bold small mb-1 text-success-emphasis">
+                                <i class="bi bi-star-fill text-warning me-1"></i> Highest Rated in @DateTime.UtcNow.ToString("MMMM")
+                            </div>
+                            <h5 class="fw-bold mb-1"><a asp-page="/Details" asp-route-id="@rec.Id" class="text-decoration-none link-body-emphasis stretched-link">@rec.Title</a></h5>
+                            <p class="text-muted small mb-2">@bestItem?.Authors</p>
+                            
+                            <div class="d-flex align-items-center mt-2">
+                                <span class="fs-4 fw-bold me-2 text-body-emphasis">
+                                    <i class="bi bi-hand-thumbs-up-fill text-primary"></i> @rec.Likes
+                                </span>
+                                <span class="text-muted small">Likes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.StaffPickRecommendation != null)
+        {
+            var rec = Model.StaffPickRecommendation;
+            var item = rec.Items.OrderBy(i => i.SeriesOrder ?? 999).FirstOrDefault();
+
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm" style="background-color: rgba(166, 93, 87, 0.1);"> <!-- Rust accent -->
+                    <div class="card-body d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            @if (item != null && !string.IsNullOrEmpty(item.ThumbnailUrl))
+                            {
+                                <img src="@item.ThumbnailUrl" class="rounded shadow-sm" alt="@item.Title" style="width: 100px; height: 150px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="bg-secondary-subtle rounded d-flex align-items-center justify-content-center" style="width: 100px; height: 150px;">
+                                    <i class="bi bi-book opacity-50 display-6"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-uppercase fw-bold small mb-1 text-danger-emphasis">
+                                <i class="bi bi-award-fill me-1"></i> Staff Pick
+                            </div>
+                            <h5 class="fw-bold mb-1"><a asp-page="/Details" asp-route-id="@rec.Id" class="text-decoration-none link-body-emphasis stretched-link">@rec.Title</a></h5>
+                            <p class="text-muted small mb-2">Recommended by @rec.RecommendedBy</p>
+                            
+                            @if (!string.IsNullOrEmpty(rec.Note))
+                            {
+                                <figure class="mb-0">
+                                    <blockquote class="blockquote">
+                                        <p class="small fst-italic mb-0 text-muted">"@(rec.Note.Length > 80 ? rec.Note.Substring(0, 80) + "..." : rec.Note)"</p>
+                                    </blockquote>
+                                </figure>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Filter & Sort Bar -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <!-- Search Row -->
+            <div class="col-12 mb-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-body-tertiary"><i class="bi bi-search"></i></span>
+                    <input type="text" asp-for="SearchQuery" class="form-control form-control-sm" placeholder="Search by title, author, or series...">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" onclick="document.getElementById('SearchQuery').value=''; this.form.submit();" title="Clear">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <button class="btn btn-primary btn-sm" type="submit">Search</button>
+                </div>
+            </div>
+            
+            <div class="col-md">
+                <label class="form-label small text-muted">Genre</label>
+                <select asp-for="Genre" class="form-select form-select-sm">
+                    <option value="">All Genres</option>
+                    @foreach (var genre in Model.AllGenres)
+                    {
+                        <option value="@genre" selected="@(Model.Genre == genre)">@genre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md">
+                <label class="form-label small text-muted">Narrator</label>
+                <select asp-for="Narrator" class="form-select form-select-sm">
+                    <option value="">All Narrators</option>
+                    @foreach (var narrator in Model.AllNarrators)
+                    {
+                        <option value="@narrator" selected="@(Model.Narrator == narrator)">@narrator</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md">
+                <label class="form-label small text-muted">Recommender</label>
+                <select asp-for="Recommender" class="form-select form-select-sm">
+                    <option value="">All Recommenders</option>
+                    @foreach (var rec in Model.AllRecommenders)
+                    {
+                        <option value="@rec" selected="@(Model.Recommender == rec)">@rec</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md">
+                <label class="form-label small text-muted">Sort By</label>
+                <select asp-for="Sort" class="form-select form-select-sm">
+                    <option value="recent">Most Recent</option>
+                    <option value="popular">Most Popular</option>
+                    <option value="title">Title (A-Z)</option>
+                    <option value="author">Author (A-Z)</option>
+                    <option value="year">Year (Newest)</option>
+                    <option value="length">Length (Longest)</option>
+                </select>
+            </div>
+            <div class="col-md">
+                <label class="form-label small text-muted">View</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="ViewMode" id="viewDefault" value="default" @(Model.ViewMode != "mini" ? "checked" : "") onchange="this.form.submit()">
+                    <label class="btn btn-sm btn-outline-secondary" for="viewDefault" title="Default Grid">
+                        <i class="bi bi-grid-fill"></i>
+                    </label>
+
+                    <input type="radio" class="btn-check" name="ViewMode" id="viewMini" value="mini" @(Model.ViewMode == "mini" ? "checked" : "") onchange="this.form.submit()">
+                    <label class="btn btn-sm btn-outline-secondary" for="viewMini" title="Mini Grid">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </label>
+                </div>
+            </div>
+            <!-- Filters will auto-submit on change if needed, but the main Search button handles the form -->
+        </form>
+    </div>
+</div>
+
+<!-- Results Count -->
+<p class="text-muted mb-3">
+    Showing <strong>@Model.Recommendations.Count</strong> recommendation@(Model.Recommendations.Count == 1 ? "" : "s")
+</p>
+
+<!-- Book Cards Grid -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 @(Model.ViewMode == "mini" ? "row-cols-xl-6" : "row-cols-xl-4") g-4">
+    @foreach (var rec in Model.Recommendations)
+    {
+        var firstBook = rec.Items.FirstOrDefault();
+        <div class="col">
+            <div class="card book-card h-100 shadow-sm" style="cursor: pointer;" onclick="window.location.href='/Details/@rec.Id'">
+                
+                @if (Model.ViewMode == "mini")
+                {
+                    @* --- MINI VIEW --- *@
+                     var coverItem = rec.IsSeries ? rec.Items.OrderBy(i => i.SeriesOrder ?? 999).FirstOrDefault() : firstBook;
+                     
+                     <div class="position-relative">
+                        <!-- Cover Image -->
+                        <div style="height: 240px; overflow: hidden; background-color: #f8f9fa;" class="d-flex align-items-center justify-content-center rounded-top">
+                             @if (coverItem != null && !string.IsNullOrEmpty(coverItem.ThumbnailUrl))
+                            {
+                                <img src="@coverItem.ThumbnailUrl" alt="@coverItem.Title" style="width: 100%; height: 100%; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <i class="bi bi-book display-4 text-muted opacity-25"></i>
+                            }
+                        </div>
+                        
+                        <!-- Overlay/Series Badge -->
+                        @if (rec.IsSeries)
+                        {
+                            <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2 shadow-sm">
+                                <i class="bi bi-collection-fill"></i> @rec.Items.Count
+                            </span>
+                        }
+                        
+                         <!-- Title Overlay/Bottom -->
+                        <div class="card-body p-2 bg-body text-center border-top">
+                             <h6 class="card-title small fw-bold text-truncate mb-0" title="@rec.Title">@rec.Title</h6>
+                             <small class="text-muted d-block text-truncate" style="font-size: 0.75rem;">@coverItem?.Authors</small>
+                        </div>
+                     </div>
+                }
+                else 
+                {
+                    @* --- DEFAULT VIEW --- *@
+                    @* Type Badge *@
+                @if (rec.IsSeries)
+                {
+                    <div class="card-header bg-warning-subtle text-warning-emphasis fw-bold py-1 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-collection"></i> Series: @rec.Items.Count Books</span>
+                        <div class="dropdown" onclick="event.stopPropagation()">
+                            <button class="btn btn-sm p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: inherit;">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li>
+                                    <form method="post" asp-page-handler="Refresh" asp-route-id="@rec.Id">
+                                        <button class="dropdown-item small"><i class="bi bi-arrow-clockwise me-2"></i>Refresh Metadata</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item small" asp-page="/Edit" asp-route-id="@rec.Id">
+                                        <i class="bi bi-pencil me-2"></i>Edit
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@rec.Id" onsubmit="return confirm('Delete?');">
+                                        <button class="dropdown-item text-danger small"><i class="bi bi-trash me-2"></i>Delete</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card-header bg-primary-subtle text-primary-emphasis fw-bold py-1 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-book"></i> Book</span>
+                        <div class="dropdown" onclick="event.stopPropagation()">
+                            <button class="btn btn-sm p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: inherit;">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li>
+                                    <form method="post" asp-page-handler="Refresh" asp-route-id="@rec.Id">
+                                        <button class="dropdown-item small"><i class="bi bi-arrow-clockwise me-2"></i>Refresh Metadata</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item small" asp-page="/Edit" asp-route-id="@rec.Id">
+                                        <i class="bi bi-pencil me-2"></i>Edit
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@rec.Id" onsubmit="return confirm('Delete?');">
+                                        <button class="dropdown-item text-danger small"><i class="bi bi-trash me-2"></i>Delete</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+
+                @* Thumbnail(s) *@
+                @if (rec.IsSeries)
+                {
+                    var bookCount = rec.Items.Count;
+                    var displayBooks = rec.Items.Take(4).ToList();
+                    
+                    @if (bookCount == 2)
+                    {
+                        <!-- 2 books: side by side -->
+                        <div class="book-cover d-flex" style="height: 200px; overflow: hidden;">
+                            @foreach (var item in displayBooks)
+                            {
+                                <div style="width: 50%; height: 100%; padding: 2px;">
+                                    @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
+                                    {
+                                        <img src="@item.ThumbnailUrl" alt="@item.Title" style="width: 100%; height: 100%; object-fit: cover;" class="rounded">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary-subtle d-flex align-items-center justify-content-center h-100 rounded">
+                                            <i class="bi bi-book text-muted"></i>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else if (bookCount == 3)
+                    {
+                        <!-- 3 books: three columns -->
+                        <div class="book-cover d-flex" style="height: 200px; overflow: hidden;">
+                            @foreach (var item in displayBooks)
+                            {
+                                <div style="width: 33.33%; height: 100%; padding: 2px;">
+                                    @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
+                                    {
+                                        <img src="@item.ThumbnailUrl" alt="@item.Title" style="width: 100%; height: 100%; object-fit: cover;" class="rounded">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary-subtle d-flex align-items-center justify-content-center h-100 rounded">
+                                            <i class="bi bi-book text-muted"></i>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- 4+ books: 2x2 grid -->
+                        <div class="book-cover d-flex flex-wrap" style="height: 200px; overflow: hidden;">
+                            @foreach (var item in displayBooks)
+                            {
+                                <div style="width: 50%; height: 50%; padding: 2px;">
+                                    @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
+                                    {
+                                        <img src="@item.ThumbnailUrl" alt="@item.Title" style="width: 100%; height: 100%; object-fit: cover;" class="rounded">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary-subtle d-flex align-items-center justify-content-center h-100 rounded">
+                                            <i class="bi bi-book text-muted"></i>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else if (firstBook != null && !string.IsNullOrEmpty(firstBook.ThumbnailUrl))
+                {
+                    <img src="@firstBook.ThumbnailUrl" class="card-img-top book-cover" alt="@firstBook.Title" style="height: 200px; object-fit: contain;">
+                }
+                else
+                {
+                    <div class="card-img-top book-cover d-flex align-items-center justify-content-center text-muted" style="height: 200px;">
+                        <i class="bi bi-book display-4 opacity-50"></i>
+                    </div>
+                }
+
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title fw-bold text-truncate" title="@rec.Title">@rec.Title</h5>
+                    
+                    @if (!rec.IsSeries && firstBook != null)
+                    {
+                        <h6 class="card-subtitle mb-2 text-muted text-truncate" title="@firstBook.Authors">@firstBook.Authors</h6>
+                    }
+                    else if (rec.IsSeries)
+                    {
+                        <small class="text-muted">@string.Join(", ", rec.Items.Take(2).Select(i => i.Title))@(rec.Items.Count > 2 ? "..." : "")</small>
+                    }
+
+                    @* Genre badges *@
+                    @if (firstBook?.Categories != null)
+                    {
+                        <div class="mt-2">
+                            @foreach (var cat in firstBook.Categories.Split(',').Take(2))
+                            {
+                                var displayCat = cat.Split(':').Last().Trim();
+                                if (displayCat.Length > 15) displayCat = displayCat.Substring(0, 12) + "...";
+                                <span class="badge bg-info text-dark me-1 small">@displayCat</span>
+                            }
+                        </div>
+                    }
+
+                    @* Star Rating *@
+                    @if (firstBook?.AverageRating != null && !string.IsNullOrEmpty(firstBook.AverageRating))
+                    {
+                        if (decimal.TryParse(firstBook.AverageRating, out var rating))
+                        {
+                            <div class="mt-2">
+                                <span class="text-warning">
+                                    <i class="bi bi-star-fill"></i>
+                                    <strong>@rating.ToString("0.00")</strong>
+                                </span>
+                                @if (firstBook.RatingCount != null && !string.IsNullOrEmpty(firstBook.RatingCount))
+                                {
+                                    <span class="text-muted small ms-1">(@firstBook.RatingCount)</span>
+                                }
+                            </div>
+                        }
+                    }
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center small">
+                        <span class="text-muted"><i class="bi bi-person-fill"></i> @rec.RecommendedBy</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted">@rec.AddedAt.ToString("MMM dd")</span>
+                            <button class="btn btn-sm btn-outline-secondary me-1" 
+                                    onclick="event.stopPropagation(); openComments(this)"
+                                    data-id="@rec.Id"
+                                    data-title="@rec.Title">
+                                <i class="bi bi-chat-text"></i> Chat <span id="comment-count-@rec.Id" class="badge bg-secondary rounded-pill ms-1">@rec.Comments.Count</span>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary like-btn" 
+                                    onclick="event.stopPropagation(); likeRecommendation(@rec.Id, this);"
+                                    data-id="@rec.Id">
+                                <i class="bi bi-hand-thumbs-up"></i> <span class="like-count">@rec.Likes</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Recommendations.Any())
+{
+    <div class="text-center mt-5 text-muted">
+        <i class="bi bi-inbox display-1 opacity-50"></i>
+        <h3 class="mt-3">The shelf is empty!</h3>
+        <p>Be the first to add a recommendation.</p>
+    </div>
+}
+
+@* Shared Chat Modal *@
+<partial name="_ChatModal" />
+
+@section Scripts {
+    <script src="~/js/chat.js"></script>
+}
+    <form method="post" style="display:none;">
+        @Html.AntiForgeryToken() 
+    </form>
