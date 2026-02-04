@@ -84,12 +84,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure Proxy Headers (CRITICAL for Fly.io/Docker)
+// Configure Proxy Headers (Critical for Docker/Reverse Proxies)
 // We must clear the defaults because they might restrict the allowed forwarding network
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto,
-    KnownNetworks = { }, // Trust all upstream proxies (Fly.io load balancer)
+    KnownNetworks = { }, // Trust all upstream proxies
     KnownProxies = { }
 });
 
