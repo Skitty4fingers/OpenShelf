@@ -83,3 +83,42 @@ Open a browser and navigate to `http://localhost` (or your servers IP).
 By default, the app uses SQLite.
 - **Docker**: The database is stored in `/app/data/openshelf.db` (mapped to your host volume).
 - **IIS**: The database is stored in the application root folder by default. Ensure backups are included in your regular server backup routine.
+
+---
+
+## Option 3: Fly.io 🎈
+
+Hosting on Fly is great because it handles HTTPS and Docker for you.
+
+### 1. Install Fly CLI
+- **Windows**: `pwsh -Command "iwr https://fly.io/install.ps1 -useb | iex"`
+- **Mac/Linux**: `curl -L https://fly.io/install.sh | sh`
+
+### 2. Login
+```bash
+fly auth login
+```
+
+### 3. Launch App
+Run this to create the app on Fly.io using the provided configuration.
+**Important**: 
+- Edit `fly.toml` first and change `app = "openshelf-demo"` to a unique name.
+- When asked if you want to copy the configuration, say **YES**.
+```bash
+fly launch --no-deploy
+```
+
+### 4. Create Persistent Storage (CRITICAL) 💾
+You MUST create the volume before deploying, or the app will crash trying to mount it.
+```bash
+fly volumes create openshelf_data -r sjc -s 1
+```
+*(Replace `sjc` with the region code you chose during launch. `-s 1` creates a 1GB volume).*
+
+### 5. Deploy
+```bash
+fly deploy
+```
+
+Your app is now live!
+

@@ -1,0 +1,27 @@
+# fly.toml app configuration file for OpenShelf
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "openshelf-demo" # CHANGE THIS to a unique name (e.g. openshelf-yourname)
+primary_region = "sjc" # Change to your nearest region (e.g. lax, ewr, lhr)
+
+[build]
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+# CRITICAL: Mounts the persistent volume for SQLite
+[mounts]
+  source = "openshelf_data"
+  destination = "/app/data"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
