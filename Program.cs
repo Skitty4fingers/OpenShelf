@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenShelf.Data;
 using OpenShelf.Services;
 using OpenShelf.Models;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
