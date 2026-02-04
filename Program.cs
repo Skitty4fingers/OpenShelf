@@ -83,10 +83,21 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Critical for Fly.io / Docker reverse proxy to handle HTTPS correctly
+// Configure Proxy Headers (CRITICAL for Fly.io/Docker)
+// We must clear the defaults because they might restrict the allowed forwarding network
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto,
+    KnownNetworks = { }, // Trust all upstream proxies (Fly.io load balancer)
+    KnownProxies = { }
 });
+
+// Persist Data Protection Keys (Prevent 400 errors on restart)
+// The cookie encryption keys are rotated if not persisted, invalidating all cookies/tokens.
+var keysFolder = Path.Combine(app.Environment.ContentRootPath, "data", "keys");
+Directory.CreateDirectory(keysFolder);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
+    .SetApplicationName("OpenShelf");
 
 app.Run();
