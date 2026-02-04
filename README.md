@@ -39,4 +39,4 @@ OpenShelf is a self-hosted book recommendation and discovery platform. It allows
 
 ## License
 
-MIT
+GNU AGPLv3
