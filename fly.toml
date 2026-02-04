@@ -3,7 +3,7 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "openshelf-demo" # CHANGE THIS to a unique name (e.g. openshelf-yourname)
+# app = "openshelf-demo" # Run 'fly launch' to generate the app name
 primary_region = "sjc" # Change to your nearest region (e.g. lax, ewr, lhr)
 
 [build]
