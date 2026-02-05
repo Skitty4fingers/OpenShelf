@@ -49,7 +49,7 @@ Use this method to host on a Windows Server.
 
 ### 1. Prerequisites
 - **Windows Server** with IIS enabled.
-- **.NET Core Hosting Bundle**: Download and install the [.NET 9.0 Hosting Bundle](https://dotnet.microsoft.com/download/dotnet/9.0) on the server.
+- **.NET Core Hosting Bundle**: Download and install the [.NET 10.0 Hosting Bundle](https://dotnet.microsoft.com/download/dotnet/10.0) on the server.
 
 ### 2. Publish the App
 On your development machine, run:

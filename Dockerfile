@@ -1,11 +1,11 @@
 # Use the official image as a parent image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 80
 ENV ASPNETCORE_HTTP_PORTS=80
 
 # Use SDK image to build
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["OpenShelf.csproj", "./"]
 RUN dotnet restore "OpenShelf.csproj"
