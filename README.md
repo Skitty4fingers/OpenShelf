@@ -15,7 +15,7 @@ OpenShelf is a self-hosted book recommendation and discovery platform. It allows
 
 ## Tech Stack
 
-- **Framework**: ASP.NET Core 9.0 Razor Pages
+- **Framework**: ASP.NET Core 10.0 Razor Pages
 - **Database**: SQLite (Entity Framework Core)
 - **Styling**: Bootstrap 5 + Bootstrap Icons
 - **Authentication**: Cookie-based Auth
