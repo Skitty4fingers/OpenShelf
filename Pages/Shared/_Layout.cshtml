@@ -36,14 +36,15 @@
                         @inject OpenShelf.Services.SettingsService SettingsService
                         @{
                             var siteSettings = await SettingsService.GetSettingsAsync();
-                            var externalIdentity = User.Identities.FirstOrDefault(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
-                            var isExternalUser = externalIdentity != null;
+                            var externalAuthResult = await Context.AuthenticateAsync("ExternalAuth");
+                            var isExternalUser = externalAuthResult.Succeeded;
+                            var externalUserName = externalAuthResult.Principal?.Identity?.Name;
                         }
 
                         @if (isExternalUser)
                         {
                             <span class="navbar-text small me-2">
-                                <i class="bi bi-person-check-fill text-success me-1"></i>@externalIdentity!.Name
+                                <i class="bi bi-person-check-fill text-success me-1"></i>@externalUserName
                             </span>
                             <a asp-page="/UserLogout" class="btn btn-sm btn-outline-secondary">Sign Out</a>
                         }

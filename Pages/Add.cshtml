@@ -98,8 +98,8 @@
 
                             <div class="mb-3">
                                 @{
-                                    var extIdentity = User.Identities.FirstOrDefault(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
-                                    var extUserName = extIdentity?.Name;
+                                    var extAuthResult = await ViewContext.HttpContext.AuthenticateAsync("ExternalAuth");
+                                    var extUserName = extAuthResult.Succeeded ? extAuthResult.Principal?.Identity?.Name : null;
                                 }
                                 <label asp-for="Recommendation.RecommendedBy" class="form-label">Recommended By (Your Name)</label>
                                 @if (!string.IsNullOrEmpty(extUserName))

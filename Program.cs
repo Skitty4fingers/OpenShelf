@@ -3,6 +3,7 @@ using OpenShelf.Data;
 using OpenShelf.Services;
 using OpenShelf.Models;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -92,25 +93,36 @@ app.Use(async (context, next) =>
     var path = context.Request.Path.Value ?? "";
 
     // Always allow: static files, login pages, auth callbacks, admin login
-    var allowedPaths = new[] { "/UserLogin", "/UserLogout", "/Admin/Login", "/signin-google", "/Error" };
+    var allowedPaths = new[] { "/UserLogin", "/UserLogout", "/Admin/Login", "/Admin/", "/signin-google", "/Error" };
     bool isAllowed = path.StartsWith("/css", StringComparison.OrdinalIgnoreCase)
         || path.StartsWith("/js", StringComparison.OrdinalIgnoreCase)
         || path.StartsWith("/images", StringComparison.OrdinalIgnoreCase)
         || path.StartsWith("/_", StringComparison.OrdinalIgnoreCase)
         || path.StartsWith("/lib", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/favicon", StringComparison.OrdinalIgnoreCase)
         || allowedPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase));
 
     if (!isAllowed)
     {
-        // Check if user is authenticated via either scheme
-        bool isAuthenticated = context.User.Identity?.IsAuthenticated == true
-            || context.User.Identities.Any(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
+        // Check default scheme (CookieAuth — for admin users)
+        bool isAuthenticated = context.User.Identity?.IsAuthenticated == true;
+
+        // Also explicitly check ExternalAuth scheme (for Google SSO users)
+        // context.User only contains the default scheme, so we must check ExternalAuth separately
+        if (!isAuthenticated)
+        {
+            var externalResult = await context.AuthenticateAsync("ExternalAuth");
+            isAuthenticated = externalResult.Succeeded;
+        }
 
         if (!isAuthenticated)
         {
             var settingsSvc = context.RequestServices.GetRequiredService<SettingsService>();
             var settings = await settingsSvc.GetSettingsAsync();
-            if (settings.RequireLogin && settings.EnableGoogleAuth)
+            if (settings.RequireLogin
+                && settings.EnableGoogleAuth
+                && !string.IsNullOrEmpty(settings.GoogleClientId)
+                && !string.IsNullOrEmpty(settings.GoogleClientSecret))
             {
                 context.Response.Redirect($"/UserLogin?returnUrl={Uri.EscapeDataString(path)}");
                 return;

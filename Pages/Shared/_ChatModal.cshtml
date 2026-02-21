@@ -21,8 +21,8 @@
                                 <input type="hidden" id="commentRecId" name="RecommendationId" />
                                 <div class="mb-3">
                                     @{
-                                        var chatExtIdentity = User.Identities.FirstOrDefault(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
-                                        var chatExtName = chatExtIdentity?.Name;
+                                        var chatExtResult = await ViewContext.HttpContext.AuthenticateAsync("ExternalAuth");
+                                        var chatExtName = chatExtResult.Succeeded ? chatExtResult.Principal?.Identity?.Name : null;
                                     }
                                     <label class="form-label small text-muted">Your Name (Optional)</label>
                                     @if (!string.IsNullOrEmpty(chatExtName))
