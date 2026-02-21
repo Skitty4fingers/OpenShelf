@@ -20,8 +20,19 @@
                             <form id="addCommentForm">
                                 <input type="hidden" id="commentRecId" name="RecommendationId" />
                                 <div class="mb-3">
+                                    @{
+                                        var chatExtIdentity = User.Identities.FirstOrDefault(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
+                                        var chatExtName = chatExtIdentity?.Name;
+                                    }
                                     <label class="form-label small text-muted">Your Name (Optional)</label>
-                                    <input type="text" class="form-control form-control-sm" id="commentAuthor" name="Author" placeholder="Anonymous" />
+                                    @if (!string.IsNullOrEmpty(chatExtName))
+                                    {
+                                        <input type="text" class="form-control form-control-sm" id="commentAuthor" name="Author" value="@chatExtName" readonly />
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="form-control form-control-sm" id="commentAuthor" name="Author" placeholder="Anonymous" />
+                                    }
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label small text-muted">Comment</label>

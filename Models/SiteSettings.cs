@@ -18,4 +18,9 @@ public class SiteSettings
     public bool EnablePublicImport { get; set; } = true;
     public bool EnablePublicMetadataRefresh { get; set; } = true;
     public bool EnableGetThisBookLinks { get; set; } = true;
+
+    // Authentication Providers
+    public bool EnableGoogleAuth { get; set; } = false;
+    public string? GoogleClientId { get; set; }
+    public string? GoogleClientSecret { get; set; }
 }

@@ -97,7 +97,53 @@
         </div>
     </div>
 
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Authentication Providers</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnableGoogleAuth" class="form-check-input" type="checkbox" role="switch" id="googleAuthToggle" />
+                        <label asp-for="Settings.EnableGoogleAuth" class="form-check-label">Enable Google Sign-In</label>
+                        <div class="form-text text-muted">Allow public users to sign in with their Google account. Their name will auto-populate when adding recommendations or chatting.</div>
+                    </div>
+                </div>
+            </div>
+            <div id="googleAuthConfig" class="border rounded p-3 bg-body-secondary" style="display: none;">
+                <div class="mb-3">
+                    <label asp-for="Settings.GoogleClientId" class="form-label">Google Client ID</label>
+                    <input asp-for="Settings.GoogleClientId" class="form-control" placeholder="xxxx.apps.googleusercontent.com" />
+                    <div class="form-text">From the <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Settings.GoogleClientSecret" class="form-label">Google Client Secret</label>
+                    <input asp-for="Settings.GoogleClientSecret" class="form-control" type="password" placeholder="GOCSPX-..." />
+                </div>
+                <div class="alert alert-info small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Set your <strong>Authorized redirect URI</strong> in Google Cloud Console to:
+                    <code>@($"{ViewContext.HttpContext.Request.Scheme}://{ViewContext.HttpContext.Request.Host}/signin-google")</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="mb-4">
         <button type="submit" class="btn btn-primary">Save Settings</button>
     </div>
 </form>
+
+@section Scripts {
+    <script>
+        // Toggle Google Auth config visibility
+        const toggle = document.getElementById('googleAuthToggle');
+        const config = document.getElementById('googleAuthConfig');
+        function updateGoogleConfigVisibility() {
+            config.style.display = toggle.checked ? 'block' : 'none';
+        }
+        toggle.addEventListener('change', updateGoogleConfigVisibility);
+        updateGoogleConfigVisibility();
+    </script>
+}

@@ -97,8 +97,20 @@
                             </div>
 
                             <div class="mb-3">
+                                @{
+                                    var extIdentity = User.Identities.FirstOrDefault(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
+                                    var extUserName = extIdentity?.Name;
+                                }
                                 <label asp-for="Recommendation.RecommendedBy" class="form-label">Recommended By (Your Name)</label>
-                                <input asp-for="Recommendation.RecommendedBy" class="form-control" required />
+                                @if (!string.IsNullOrEmpty(extUserName))
+                                {
+                                    <input asp-for="Recommendation.RecommendedBy" class="form-control" required value="@extUserName" readonly />
+                                    <div class="form-text text-success"><i class="bi bi-check-circle me-1"></i>Signed in as @extUserName</div>
+                                }
+                                else
+                                {
+                                    <input asp-for="Recommendation.RecommendedBy" class="form-control" required />
+                                }
                                 <span asp-validation-for="Recommendation.RecommendedBy" class="text-danger"></span>
                             </div>
 

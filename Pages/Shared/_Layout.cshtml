@@ -32,7 +32,30 @@
                             <a class="nav-link" asp-area="" asp-page="/Add">Add Recommendation</a>
                         </li>
                     </ul>
-                    <div class="d-flex align-items-center ms-auto">
+                    <div class="d-flex align-items-center ms-auto gap-2">
+                        @inject OpenShelf.Services.SettingsService SettingsService
+                        @{
+                            var siteSettings = await SettingsService.GetSettingsAsync();
+                            var externalIdentity = User.Identities.FirstOrDefault(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
+                            var isExternalUser = externalIdentity != null;
+                        }
+
+                        @if (isExternalUser)
+                        {
+                            <span class="navbar-text small me-2">
+                                <i class="bi bi-person-check-fill text-success me-1"></i>@externalIdentity!.Name
+                            </span>
+                            <a asp-page="/UserLogout" class="btn btn-sm btn-outline-secondary">Sign Out</a>
+                        }
+                        else if (siteSettings.EnableGoogleAuth 
+                            && !string.IsNullOrEmpty(siteSettings.GoogleClientId)
+                            && !User.Identity.IsAuthenticated)
+                        {
+                            <a asp-page="/UserLogin" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-person me-1"></i>Sign In
+                            </a>
+                        }
+
                         <button class="btn btn-link nav-link p-0" onclick="toggleTheme()" aria-label="Toggle theme">
                             <i id="theme-icon" class="bi bi-moon-stars" style="font-size: 1.2rem;"></i>
                         </button>

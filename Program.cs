@@ -3,6 +3,7 @@ using OpenShelf.Data;
 using OpenShelf.Services;
 using OpenShelf.Models;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +29,27 @@ builder.Services.AddAuthentication("CookieAuth")
         options.Cookie.IsEssential = true; // Required for auth to work without consent
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
+    })
+    .AddCookie("ExternalAuth", options =>
+    {
+        options.Cookie.Name = "OpenShelf.External";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.IsEssential = true;
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
+    })
+    .AddGoogle("Google", options =>
+    {
+        options.SignInScheme = "ExternalAuth";
+        options.ClientId = "placeholder";
+        options.ClientSecret = "placeholder";
+        options.CallbackPath = "/signin-google";
     });
+
+// Dynamic Google config from DB
+builder.Services.AddSingleton<IPostConfigureOptions<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>, OpenShelf.Services.GoogleOptionsPostConfigure>();
 
 builder.Services.AddAuthorization(options =>
 {
