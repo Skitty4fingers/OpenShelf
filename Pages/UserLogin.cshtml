@@ -8,13 +8,14 @@
     <div class="col-md-5">
         <div class="card shadow-sm border-0">
             <div class="card-body text-center p-5">
-                <i class="bi bi-person-circle display-1 text-muted mb-3"></i>
-                <h2 class="mb-3">Sign In to OpenShelf</h2>
-                <p class="text-muted mb-4">Sign in to have your name automatically attached to your recommendations and comments.</p>
+                <i class="bi bi-book-half display-1 mb-3" style="color: #a65d57;"></i>
+                <h2 class="mb-3">Welcome to OpenShelf</h2>
+                <p class="text-muted mb-4">Sign in to view and submit recommendations.</p>
 
                 @if (Model.GoogleAuthEnabled)
                 {
-                    <a href="/UserLogin?handler=Google" class="btn btn-lg btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2 mb-3">
+                    <a href="/UserLogin?handler=Google" class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2 mb-3"
+                       style="background-color: #fff; color: #3c4043; border: 1px solid #dadce0; font-weight: 500;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
                             <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                             <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
@@ -25,11 +26,13 @@
                     </a>
                 }
 
-                <hr class="my-4"/>
-
-                <a asp-page="/Index" class="btn btn-link text-muted">
-                    <i class="bi bi-arrow-left me-1"></i> Continue as Guest
-                </a>
+                @if (!Model.RequireLogin)
+                {
+                    <hr class="my-4"/>
+                    <a asp-page="/Index" class="btn btn-link text-muted">
+                        <i class="bi bi-arrow-left me-1"></i> Continue as Guest
+                    </a>
+                }
             </div>
         </div>
     </div>

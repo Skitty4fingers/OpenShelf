@@ -12,14 +12,20 @@ public class UserLoginModel : PageModel
 {
     private readonly SettingsService _settingsService;
     private readonly IOptionsMonitorCache<GoogleOptions> _optionsCache;
+    private readonly IOptionsMonitor<GoogleOptions> _optionsMonitor;
 
-    public UserLoginModel(SettingsService settingsService, IOptionsMonitorCache<GoogleOptions> optionsCache)
+    public UserLoginModel(
+        SettingsService settingsService,
+        IOptionsMonitorCache<GoogleOptions> optionsCache,
+        IOptionsMonitor<GoogleOptions> optionsMonitor)
     {
         _settingsService = settingsService;
         _optionsCache = optionsCache;
+        _optionsMonitor = optionsMonitor;
     }
 
     public bool GoogleAuthEnabled { get; set; }
+    public bool RequireLogin { get; set; }
 
     public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
     {
@@ -27,14 +33,13 @@ public class UserLoginModel : PageModel
         GoogleAuthEnabled = settings.EnableGoogleAuth
             && !string.IsNullOrEmpty(settings.GoogleClientId)
             && !string.IsNullOrEmpty(settings.GoogleClientSecret);
+        RequireLogin = settings.RequireLogin;
 
         if (!GoogleAuthEnabled)
         {
-            // No auth providers enabled → redirect home
             return RedirectToPage("/Index");
         }
 
-        // If already signed in via ExternalAuth, redirect home
         if (User.Identities.Any(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated))
         {
             return RedirectToPage("/Index");
@@ -43,11 +48,21 @@ public class UserLoginModel : PageModel
         return Page();
     }
 
-    public IActionResult OnGetGoogle(string? returnUrl = null)
+    public async Task<IActionResult> OnGetGoogleAsync(string? returnUrl = null)
     {
-        // Clear cached Google options so PostConfigure re-reads fresh credentials from the DB.
-        // Without this, the "placeholder" values from startup would be sent to Google.
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnableGoogleAuth
+            || string.IsNullOrEmpty(settings.GoogleClientId)
+            || string.IsNullOrEmpty(settings.GoogleClientSecret))
+        {
+            return RedirectToPage("/Index");
+        }
+
+        // Clear cached options and directly set credentials from DB
         _optionsCache.TryRemove("Google");
+        var googleOptions = _optionsMonitor.Get("Google");
+        googleOptions.ClientId = settings.GoogleClientId;
+        googleOptions.ClientSecret = settings.GoogleClientSecret;
 
         var redirectUrl = Url.Page("/UserLogin", pageHandler: "GoogleCallback", values: new { returnUrl });
         var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
@@ -56,8 +71,6 @@ public class UserLoginModel : PageModel
 
     public async Task<IActionResult> OnGetGoogleCallbackAsync(string? returnUrl = null)
     {
-        // The ExternalAuth cookie is already set by the Google middleware at this point
-        // Redirect to the return URL or home
         if (!string.IsNullOrEmpty(returnUrl))
         {
             return LocalRedirect(returnUrl);
@@ -65,3 +78,4 @@ public class UserLoginModel : PageModel
         return RedirectToPage("/Index");
     }
 }
+
