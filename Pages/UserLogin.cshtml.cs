@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
 using OpenShelf.Services;
 
 namespace OpenShelf.Pages;
@@ -9,10 +11,12 @@ namespace OpenShelf.Pages;
 public class UserLoginModel : PageModel
 {
     private readonly SettingsService _settingsService;
+    private readonly IOptionsMonitorCache<GoogleOptions> _optionsCache;
 
-    public UserLoginModel(SettingsService settingsService)
+    public UserLoginModel(SettingsService settingsService, IOptionsMonitorCache<GoogleOptions> optionsCache)
     {
         _settingsService = settingsService;
+        _optionsCache = optionsCache;
     }
 
     public bool GoogleAuthEnabled { get; set; }
@@ -41,6 +45,10 @@ public class UserLoginModel : PageModel
 
     public IActionResult OnGetGoogle(string? returnUrl = null)
     {
+        // Clear cached Google options so PostConfigure re-reads fresh credentials from the DB.
+        // Without this, the "placeholder" values from startup would be sent to Google.
+        _optionsCache.TryRemove("Google");
+
         var redirectUrl = Url.Page("/UserLogin", pageHandler: "GoogleCallback", values: new { returnUrl });
         var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
         return Challenge(properties, "Google");
