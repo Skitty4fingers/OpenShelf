@@ -23,4 +23,7 @@ public class SiteSettings
     public bool EnableGoogleAuth { get; set; } = false;
     public string? GoogleClientId { get; set; }
     public string? GoogleClientSecret { get; set; }
+
+    // Require users to sign in before accessing the app
+    public bool RequireLogin { get; set; } = false;
 }

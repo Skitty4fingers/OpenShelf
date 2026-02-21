@@ -85,6 +85,42 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Require Login gate — redirect unauthenticated users to sign-in page
+// when RequireLogin is enabled in SiteSettings
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+
+    // Always allow: static files, login pages, auth callbacks, admin login
+    var allowedPaths = new[] { "/UserLogin", "/UserLogout", "/Admin/Login", "/signin-google", "/Error" };
+    bool isAllowed = path.StartsWith("/css", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/js", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/images", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/_", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/lib", StringComparison.OrdinalIgnoreCase)
+        || allowedPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
+    if (!isAllowed)
+    {
+        // Check if user is authenticated via either scheme
+        bool isAuthenticated = context.User.Identity?.IsAuthenticated == true
+            || context.User.Identities.Any(i => i.AuthenticationType == "ExternalAuth" && i.IsAuthenticated);
+
+        if (!isAuthenticated)
+        {
+            var settingsSvc = context.RequestServices.GetRequiredService<SettingsService>();
+            var settings = await settingsSvc.GetSettingsAsync();
+            if (settings.RequireLogin && settings.EnableGoogleAuth)
+            {
+                context.Response.Redirect($"/UserLogin?returnUrl={Uri.EscapeDataString(path)}");
+                return;
+            }
+        }
+    }
+
+    await next();
+});
+
 app.MapRazorPages();
 
 // Ensure DB is created

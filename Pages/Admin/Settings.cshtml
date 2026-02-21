@@ -115,16 +115,77 @@
                 <div class="mb-3">
                     <label asp-for="Settings.GoogleClientId" class="form-label">Google Client ID</label>
                     <input asp-for="Settings.GoogleClientId" class="form-control" placeholder="xxxx.apps.googleusercontent.com" />
-                    <div class="form-text">From the <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>.</div>
                 </div>
                 <div class="mb-3">
                     <label asp-for="Settings.GoogleClientSecret" class="form-label">Google Client Secret</label>
                     <input asp-for="Settings.GoogleClientSecret" class="form-control" type="password" placeholder="GOCSPX-..." />
                 </div>
-                <div class="alert alert-info small mb-0">
+                <div class="alert alert-info small mb-2">
                     <i class="bi bi-info-circle me-1"></i>
                     Set your <strong>Authorized redirect URI</strong> in Google Cloud Console to:
                     <code>@($"{ViewContext.HttpContext.Request.Scheme}://{ViewContext.HttpContext.Request.Host}/signin-google")</code>
+                </div>
+
+                @* ── Collapsible Setup Guide ── *@
+                <div class="mt-3">
+                    <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" href="#googleSetupGuide" role="button" aria-expanded="false">
+                        <i class="bi bi-question-circle me-1"></i>How to set up Google Sign-In
+                    </a>
+                    <div class="collapse mt-2" id="googleSetupGuide">
+                        <div class="card card-body small bg-body-tertiary">
+                            <h6 class="fw-bold">Step 1 — Create a Google Cloud Project</h6>
+                            <ol class="mb-3">
+                                <li>Go to the <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>.</li>
+                                <li>Click the project dropdown at the top → <strong>New Project</strong>.</li>
+                                <li>Give it a name (e.g. "OpenShelf") and click <strong>Create</strong>.</li>
+                                <li>Select the new project from the project dropdown.</li>
+                            </ol>
+
+                            <h6 class="fw-bold">Step 2 — Configure the OAuth Consent Screen</h6>
+                            <ol class="mb-3">
+                                <li>In the left sidebar, navigate to <strong>APIs & Services → OAuth consent screen</strong>.</li>
+                                <li>Select <strong>External</strong> (unless you have a Google Workspace domain) and click <strong>Create</strong>.</li>
+                                <li>Fill in the required fields:
+                                    <ul>
+                                        <li><strong>App name</strong>: OpenShelf</li>
+                                        <li><strong>User support email</strong>: your email</li>
+                                        <li><strong>Developer contact</strong>: your email</li>
+                                    </ul>
+                                </li>
+                                <li>Click <strong>Save and Continue</strong> through the Scopes and Test Users screens (defaults are fine).</li>
+                                <li>Click <strong>Back to Dashboard</strong>.</li>
+                            </ol>
+
+                            <h6 class="fw-bold">Step 3 — Create OAuth 2.0 Credentials</h6>
+                            <ol class="mb-3">
+                                <li>Go to <strong>APIs & Services → Credentials</strong>.</li>
+                                <li>Click <strong>+ Create Credentials → OAuth client ID</strong>.</li>
+                                <li>Set <strong>Application type</strong> to <strong>Web application</strong>.</li>
+                                <li>Give it a name (e.g. "OpenShelf Web Client").</li>
+                                <li>Under <strong>Authorized redirect URIs</strong>, click <strong>+ Add URI</strong> and enter: <br/>
+                                    <code>@($"{ViewContext.HttpContext.Request.Scheme}://{ViewContext.HttpContext.Request.Host}/signin-google")</code>
+                                </li>
+                                <li>Click <strong>Create</strong>.</li>
+                                <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> into the fields above.</li>
+                            </ol>
+
+                            <h6 class="fw-bold">Step 4 — Publish the App (Optional)</h6>
+                            <ol class="mb-0">
+                                <li>While in "Testing" mode, only users you add as test users can sign in.</li>
+                                <li>To allow anyone with a Google account, go back to the <strong>OAuth consent screen</strong> and click <strong>Publish App</strong>.</li>
+                                <li>For small/private deployments, you can stay in Testing mode and just add your users' email addresses.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Require Login toggle — only shown when an auth provider is on ── *@
+            <div id="requireLoginSection" class="mt-3 border rounded p-3 bg-body-secondary" style="display: none;">
+                <div class="form-check form-switch">
+                    <input asp-for="Settings.RequireLogin" class="form-check-input" type="checkbox" role="switch" id="requireLoginToggle" />
+                    <label asp-for="Settings.RequireLogin" class="form-check-label">Require Sign-In to Access App</label>
+                    <div class="form-text text-muted">When enabled, visitors must sign in before they can browse the shelf. Admin login is always available.</div>
                 </div>
             </div>
         </div>
@@ -137,13 +198,23 @@
 
 @section Scripts {
     <script>
-        // Toggle Google Auth config visibility
-        const toggle = document.getElementById('googleAuthToggle');
-        const config = document.getElementById('googleAuthConfig');
-        function updateGoogleConfigVisibility() {
-            config.style.display = toggle.checked ? 'block' : 'none';
+        const googleToggle = document.getElementById('googleAuthToggle');
+        const googleConfig = document.getElementById('googleAuthConfig');
+        const requireLoginSection = document.getElementById('requireLoginSection');
+        const requireLoginToggle = document.getElementById('requireLoginToggle');
+
+        function updateVisibility() {
+            const anyAuthEnabled = googleToggle.checked;
+            googleConfig.style.display = googleToggle.checked ? 'block' : 'none';
+            requireLoginSection.style.display = anyAuthEnabled ? 'block' : 'none';
+
+            // If no auth providers are on, force RequireLogin off
+            if (!anyAuthEnabled) {
+                requireLoginToggle.checked = false;
+            }
         }
-        toggle.addEventListener('change', updateGoogleConfigVisibility);
-        updateGoogleConfigVisibility();
+
+        googleToggle.addEventListener('change', updateVisibility);
+        updateVisibility();
     </script>
 }
