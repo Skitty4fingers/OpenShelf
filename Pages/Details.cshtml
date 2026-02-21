@@ -1,9 +1,11 @@
 @page "{id:int}"
+@inject OpenShelf.Services.SettingsService SettingsService
 @model OpenShelf.Pages.DetailsModel
 @{
     ViewData["Title"] = Model.Recommendation.Title;
     var isSeries = Model.Recommendation.IsSeries;
     var firstBook = Model.Recommendation.Items.FirstOrDefault();
+    var settings = await SettingsService.GetSettingsAsync();
 }
 
 <nav aria-label="breadcrumb" class="mb-4">
@@ -74,10 +76,13 @@
             </div>
             
             <!-- Refresh Metadata Button -->
-            <button class="btn btn-outline-secondary" onclick="refreshMetadata(@Model.Recommendation.Id)" id="refreshBtn">
-                <i class="bi bi-arrow-clockwise" id="refreshIcon"></i> 
-                <span id="refreshText">Refresh Book Data</span>
-            </button>
+            @if (settings.EnablePublicMetadataRefresh || User.Identity.IsAuthenticated)
+            {
+                <button class="btn btn-outline-secondary" onclick="refreshMetadata(@Model.Recommendation.Id)" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise" id="refreshIcon"></i> 
+                    <span id="refreshText">Refresh Book Data</span>
+                </button>
+            }
             
             <!-- Discover Series Button (only for series) -->
             @if (isSeries)
@@ -88,11 +93,14 @@
             }
             
             <!-- Chat Button -->
-            <button class="btn btn-outline-secondary" onclick="openComments(this)" 
-                    data-id="@Model.Recommendation.Id" 
-                    data-title="@Model.Recommendation.Title">
-                <i class="bi bi-chat-text"></i> Chat
-            </button>
+            @if (settings.EnableChat)
+            {
+                <button class="btn btn-outline-secondary" onclick="openComments(this)" 
+                        data-id="@Model.Recommendation.Id" 
+                        data-title="@Model.Recommendation.Title">
+                    <i class="bi bi-chat-text"></i> Chat
+                </button>
+            }
             
             <a asp-page="/Edit" asp-route-id="@Model.Recommendation.Id" class="btn btn-outline-secondary">
                 <i class="bi bi-pencil"></i> Edit Details
@@ -278,23 +286,26 @@
             <p class="lead" style="white-space: pre-wrap;">@(firstBook.Description ?? "No description available.")</p>
             
             <!-- Buy Links for Single Book -->
-            <div class="mt-4">
-                <h5>Get This Book</h5>
-                <div class="d-flex flex-wrap gap-2">
-                    @{
-                        var bookSearchQuery = Uri.EscapeDataString(firstBook.Title + " " + firstBook.Authors);
-                    }
-                    <a href="https://www.amazon.com/s?k=@bookSearchQuery&i=stripbooks" target="_blank" class="btn btn-warning">
-                        <i class="bi bi-cart"></i> Amazon
-                    </a>
-                    <a href="https://www.amazon.com/s?k=@bookSearchQuery&i=digital-text" target="_blank" class="btn btn-dark">
-                        <i class="bi bi-phone"></i> Kindle
-                    </a>
-                    <a href="https://www.audible.com/search?keywords=@bookSearchQuery" target="_blank" class="btn btn-primary">
-                        <i class="bi bi-headphones"></i> Audible
-                    </a>
+            @if (settings.EnableGetThisBookLinks)
+            {
+                <div class="mt-4">
+                    <h5>Get This Book</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        @{
+                            var bookSearchQuery = Uri.EscapeDataString(firstBook.Title + " " + firstBook.Authors);
+                        }
+                        <a href="https://www.amazon.com/s?k=@bookSearchQuery&i=stripbooks" target="_blank" class="btn btn-warning">
+                            <i class="bi bi-cart"></i> Amazon
+                        </a>
+                        <a href="https://www.amazon.com/s?k=@bookSearchQuery&i=digital-text" target="_blank" class="btn btn-dark">
+                            <i class="bi bi-phone"></i> Kindle
+                        </a>
+                        <a href="https://www.audible.com/search?keywords=@bookSearchQuery" target="_blank" class="btn btn-primary">
+                            <i class="bi bi-headphones"></i> Audible
+                        </a>
+                    </div>
                 </div>
-            </div>
+            }
         }
 
         <a asp-page="/Index" class="btn btn-outline-secondary mt-4">

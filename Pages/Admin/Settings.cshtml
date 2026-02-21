@@ -1,0 +1,103 @@
+@page
+@model OpenShelf.Pages.Admin.SettingsModel
+@{
+    ViewData["Title"] = "Site Settings";
+}
+
+<div class="row align-items-center mb-4">
+    <div class="col">
+        <h1 class="h3 mb-0 text-gray-800">Site Settings</h1>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<form method="post">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">API Extensions</h6>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Settings.GoogleBooksApiKey" class="form-label">Google Books API Key</label>
+                <input asp-for="Settings.GoogleBooksApiKey" class="form-control" />
+                <div class="form-text">Optional. Provide an API key to increase your Google Books API quota.</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnableGoogleBooks" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnableGoogleBooks" class="form-check-label">Enable Google Books Data Source</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnableOpenLibrary" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnableOpenLibrary" class="form-check-label">Enable Open Library Data Source</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnableAudible" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnableAudible" class="form-check-label">Enable Audible Data Source</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnableGoodreads" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnableGoodreads" class="form-check-label">Enable Goodreads Data Source</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Feature Flags</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnableChat" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnableChat" class="form-check-label">Enable Read-Together Chat</label>
+                        <div class="form-text text-muted">Allows users to leave comments on books.</div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnablePublicImport" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnablePublicImport" class="form-check-label">Enable Public Import</label>
+                        <div class="form-text text-muted">Allows non-admins to import books via ISBN/Search. Note: Ensure you want anonymous users importing books.</div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnablePublicMetadataRefresh" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnablePublicMetadataRefresh" class="form-check-label">Enable Public Metadata Refresh</label>
+                        <div class="form-text text-muted">Allows non-admins to click 'Refresh Metadata' on books.</div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="Settings.EnableGetThisBookLinks" class="form-check-input" type="checkbox" role="switch" />
+                        <label asp-for="Settings.EnableGetThisBookLinks" class="form-check-label">Enable "Get This Book" Links</label>
+                        <div class="form-text text-muted">Shows the retail links (Audible, Amazon, etc) on the book details page.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+    </div>
+</form>

@@ -6,13 +6,13 @@ namespace OpenShelf.Services;
 public class GoogleBooksService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
+    private readonly SettingsService _settingsService;
     private readonly ILogger<GoogleBooksService> _logger;
 
-    public GoogleBooksService(HttpClient httpClient, IConfiguration configuration, ILogger<GoogleBooksService> logger)
+    public GoogleBooksService(HttpClient httpClient, SettingsService settingsService, ILogger<GoogleBooksService> logger)
     {
         _httpClient = httpClient;
-        _apiKey = configuration["GoogleBooksApiKey"] ?? string.Empty;
+        _settingsService = settingsService;
         _logger = logger;
     }
 
@@ -35,6 +35,9 @@ public class GoogleBooksService
 
     private async Task<List<GoogleBookResult>> SearchGoogleBooksAsync(string query)
     {
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnableGoogleBooks) return new List<GoogleBookResult>();
+
         string encodedQuery;
         var partIndex = query.IndexOf(" by ", StringComparison.OrdinalIgnoreCase);
         if (partIndex > 0)
@@ -51,9 +54,9 @@ public class GoogleBooksService
         var url = $"https://www.googleapis.com/books/v1/volumes?q={encodedQuery}&maxResults=40";
         
         // Add API key only if provided
-        if (!string.IsNullOrEmpty(_apiKey))
+        if (!string.IsNullOrEmpty(settings.GoogleBooksApiKey))
         {
-            url += $"&key={_apiKey}";
+            url += $"&key={settings.GoogleBooksApiKey}";
         }
         
         try 
@@ -97,6 +100,9 @@ public class GoogleBooksService
 
     private async Task<List<GoogleBookResult>> SearchOpenLibraryAsync(string query)
     {
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnableOpenLibrary) return new List<GoogleBookResult>();
+
         string url;
         var partIndex = query.IndexOf(" by ", StringComparison.OrdinalIgnoreCase);
         if (partIndex > 0)

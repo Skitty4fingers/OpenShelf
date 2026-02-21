@@ -12,6 +12,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<GoogleBooksService>();
 builder.Services.AddScoped<AudibleService>();
 builder.Services.AddScoped<GoodreadsService>();
+builder.Services.AddScoped<SettingsService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));

@@ -1,7 +1,9 @@
 @page
+@inject OpenShelf.Services.SettingsService SettingsService
 @model OpenShelf.Pages.IndexModel
 @{
     ViewData["Title"] = "Shelf";
+    var settings = await SettingsService.GetSettingsAsync();
 }
 
 <div class="text-center mb-4">
@@ -12,9 +14,12 @@
     <a asp-page="/Add" class="btn btn-lg btn-success shadow-sm">
         <i class="bi bi-plus-circle me-2"></i> Add Recommendation
     </a>
-    <a asp-page="/Import" class="btn btn-lg btn-outline-secondary shadow-sm ms-2">
-        <i class="bi bi-upload me-2"></i> Import CSV
-    </a>
+    @if (settings.EnablePublicImport || User.Identity.IsAuthenticated)
+    {
+        <a asp-page="/Import" class="btn btn-lg btn-outline-secondary shadow-sm ms-2">
+            <i class="bi bi-upload me-2"></i> Import CSV
+        </a>
+    }
     
     @if (User.Identity.IsAuthenticated)
     {
@@ -246,11 +251,14 @@
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow">
-                                <li>
-                                    <form method="post" asp-page-handler="Refresh" asp-route-id="@rec.Id">
-                                        <button class="dropdown-item small"><i class="bi bi-arrow-clockwise me-2"></i>Refresh Metadata</button>
-                                    </form>
-                                </li>
+                                @if (settings.EnablePublicMetadataRefresh || User.Identity.IsAuthenticated)
+                                {
+                                    <li>
+                                        <form method="post" asp-page-handler="Refresh" asp-route-id="@rec.Id">
+                                            <button class="dropdown-item small"><i class="bi bi-arrow-clockwise me-2"></i>Refresh Metadata</button>
+                                        </form>
+                                    </li>
+                                }
                                 <li>
                                     <a class="dropdown-item small" asp-page="/Edit" asp-route-id="@rec.Id">
                                         <i class="bi bi-pencil me-2"></i>Edit
@@ -275,11 +283,14 @@
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow">
-                                <li>
-                                    <form method="post" asp-page-handler="Refresh" asp-route-id="@rec.Id">
-                                        <button class="dropdown-item small"><i class="bi bi-arrow-clockwise me-2"></i>Refresh Metadata</button>
-                                    </form>
-                                </li>
+                                @if (settings.EnablePublicMetadataRefresh || User.Identity.IsAuthenticated)
+                                {
+                                    <li>
+                                        <form method="post" asp-page-handler="Refresh" asp-route-id="@rec.Id">
+                                            <button class="dropdown-item small"><i class="bi bi-arrow-clockwise me-2"></i>Refresh Metadata</button>
+                                        </form>
+                                    </li>
+                                }
                                 <li>
                                     <a class="dropdown-item small" asp-page="/Edit" asp-route-id="@rec.Id">
                                         <i class="bi bi-pencil me-2"></i>Edit
@@ -424,12 +435,15 @@
                         <span class="text-muted"><i class="bi bi-person-fill"></i> @rec.RecommendedBy</span>
                         <div class="d-flex align-items-center gap-2">
                             <span class="text-muted">@rec.AddedAt.ToString("MMM dd")</span>
-                            <button class="btn btn-sm btn-outline-secondary me-1" 
-                                    onclick="event.stopPropagation(); openComments(this)"
-                                    data-id="@rec.Id"
-                                    data-title="@rec.Title">
-                                <i class="bi bi-chat-text"></i> Chat <span id="comment-count-@rec.Id" class="badge bg-secondary rounded-pill ms-1">@rec.Comments.Count</span>
-                            </button>
+                            @if (settings.EnableChat)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary me-1" 
+                                        onclick="event.stopPropagation(); openComments(this)"
+                                        data-id="@rec.Id"
+                                        data-title="@rec.Title">
+                                    <i class="bi bi-chat-text"></i> Chat <span id="comment-count-@rec.Id" class="badge bg-secondary rounded-pill ms-1">@rec.Comments.Count</span>
+                                </button>
+                            }
                             <button class="btn btn-sm btn-outline-primary like-btn" 
                                     onclick="event.stopPropagation(); likeRecommendation(@rec.Id, this);"
                                     data-id="@rec.Id">

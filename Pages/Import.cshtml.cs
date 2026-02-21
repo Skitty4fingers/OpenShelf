@@ -15,10 +15,12 @@ namespace OpenShelf.Pages;
 public class ImportModel : PageModel
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly SettingsService _settingsService;
 
-    public ImportModel(IServiceScopeFactory scopeFactory)
+    public ImportModel(IServiceScopeFactory scopeFactory, SettingsService settingsService)
     {
         _scopeFactory = scopeFactory;
+        _settingsService = settingsService;
     }
 
     // --- State ---
@@ -44,12 +46,26 @@ public class ImportModel : PageModel
     public string? Message { get; set; }
     public string MessageType { get; set; } = "info";
 
-    public void OnGet() { }
+    public async Task<IActionResult> OnGetAsync() 
+    { 
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnablePublicImport && !User.Identity.IsAuthenticated)
+        {
+            return Forbid();
+        }
+        return Page();
+    }
 
     // --- Endpoints ---
 
     public async Task<IActionResult> OnPostStartImportAsync()
     {
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnablePublicImport && !User.Identity.IsAuthenticated)
+        {
+            return new JsonResult(new { success = false, message = "Public import is disabled." });
+        }
+
         if (File == null || File.Length == 0)
         {
             return new JsonResult(new { success = false, message = "Please select a file." });

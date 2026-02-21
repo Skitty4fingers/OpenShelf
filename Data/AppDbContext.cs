@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Comment> Comments { get; set; }
     public DbSet<RecommendationLike> RecommendationLikes { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<SiteSettings> SiteSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,5 +20,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
+
+        // Seed default settings
+        modelBuilder.Entity<SiteSettings>().HasData(new SiteSettings { Id = 1 });
     }
 }

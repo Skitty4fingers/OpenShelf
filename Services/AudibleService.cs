@@ -7,17 +7,22 @@ namespace OpenShelf.Services;
 public class AudibleService
 {
     private readonly HttpClient _httpClient;
+    private readonly SettingsService _settingsService;
     private readonly ILogger<AudibleService> _logger;
 
-    public AudibleService(HttpClient httpClient, ILogger<AudibleService> logger)
+    public AudibleService(HttpClient httpClient, SettingsService settingsService, ILogger<AudibleService> logger)
     {
         _httpClient = httpClient;
+        _settingsService = settingsService;
         _logger = logger;
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
     }
 
     public async Task<(string? Narrator, string? Length, string? Description, string? CoverImageUrl)> SearchAndGetMetadataAsync(string title, string authors)
     {
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnableAudible) return (null, null, null, null);
+
         try 
         {
             var query = $"{title} {authors}".Trim();

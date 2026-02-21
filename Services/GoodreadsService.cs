@@ -6,17 +6,22 @@ namespace OpenShelf.Services;
 public class GoodreadsService
 {
     private readonly HttpClient _httpClient;
+    private readonly SettingsService _settingsService;
     private readonly ILogger<GoodreadsService> _logger;
 
-    public GoodreadsService(HttpClient httpClient, ILogger<GoodreadsService> logger)
+    public GoodreadsService(HttpClient httpClient, SettingsService settingsService, ILogger<GoodreadsService> logger)
     {
         _httpClient = httpClient;
+        _settingsService = settingsService;
         _logger = logger;
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
     }
 
     public async Task<(string? CoverImageUrl, string? Description, string? Rating)> SearchAndGetMetadataAsync(string title, string authors)
     {
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnableGoodreads) return (null, null, null);
+
         try 
         {
             var query = $"{title} {authors}".Trim();
@@ -148,6 +153,9 @@ public class GoodreadsService
 
     public async Task<List<SeriesBookInfo>> GetSeriesBooksAsync(string seriesName, string? firstBookTitle = null)
     {
+        var settings = await _settingsService.GetSettingsAsync();
+        if (!settings.EnableGoodreads) return new List<SeriesBookInfo>();
+
         try
         {
             _logger.LogInformation($"Searching Goodreads series: {seriesName}");
