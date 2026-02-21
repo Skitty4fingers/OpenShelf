@@ -40,6 +40,12 @@ public class SettingsService
         settings.EnablePublicMetadataRefresh = newSettings.EnablePublicMetadataRefresh;
         settings.EnableGetThisBookLinks = newSettings.EnableGetThisBookLinks;
 
+        // Authentication
+        settings.EnableGoogleAuth = newSettings.EnableGoogleAuth;
+        settings.GoogleClientId = newSettings.GoogleClientId;
+        settings.GoogleClientSecret = newSettings.GoogleClientSecret;
+        settings.RequireLogin = newSettings.RequireLogin;
+
         await _context.SaveChangesAsync();
     }
 }
