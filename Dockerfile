@@ -2,7 +2,9 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 80
+# Default to port 80; Railway overrides via its PORT env var
 ENV ASPNETCORE_HTTP_PORTS=80
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Use SDK image to build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build

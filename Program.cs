@@ -70,11 +70,19 @@ builder.Services.AddDataProtection()
 
 var app = builder.Build();
 
+// Configure Proxy Headers (Critical for Railway/Docker/Reverse Proxies)
+// Must be FIRST in the pipeline so downstream middleware sees the correct scheme/IP.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto,
+    KnownNetworks = { }, // Trust all upstream proxies
+    KnownProxies = { }
+});
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -164,16 +172,6 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("✅ Default admin created: admin / admin");
     }
 }
-
-// Configure Proxy Headers (Critical for Docker/Reverse Proxies)
-// We must clear the defaults because they might restrict the allowed forwarding network
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto,
-    KnownNetworks = { }, // Trust all upstream proxies
-    KnownProxies = { }
-});
-
 
 
 app.Run();

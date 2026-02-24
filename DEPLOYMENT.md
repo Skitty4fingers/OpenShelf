@@ -88,6 +88,64 @@ Open a browser and navigate to `http://localhost` (or your server's IP).
 
 ---
 
+## Option 3: Railway (Cloud) ☁️
+
+Deploy OpenShelf to the cloud with automatic deploys on every `git push`.
+
+### 1. Connect GitHub
+1. Create an account at [railway.com](https://railway.com).
+2. Click **New Project → Deploy from GitHub repo**.
+3. Select your **OpenShelf** repository and branch (e.g., `main`).
+4. Railway auto-detects the `Dockerfile` and builds from it.
+
+### 2. Add a Persistent Volume
+SQLite requires a persistent volume so your database survives redeploys.
+
+1. In your Railway service, go to **Settings → Volumes**.
+2. Click **Add Volume**.
+   - **Mount Path**: `/app/data`
+3. Click **Save**.
+
+### 3. Set Environment Variables
+In **Settings → Variables**, add:
+
+| Variable | Value |
+|----------|-------|
+| `ASPNETCORE_ENVIRONMENT` | `Production` |
+| `PORT` | `8080` |
+
+> [!NOTE]
+> Railway assigns a dynamic port via the `PORT` environment variable. The Dockerfile's `EXPOSE 80` is the container default, but Railway routes traffic through its own proxy.
+
+### 4. Custom Domain & SSL
+Railway provides free automatic SSL certificates via Let's Encrypt.
+
+1. In your Railway service, go to **Settings → Networking**.
+2. Click **Generate Domain** to get a default `*.up.railway.app` URL.
+3. Click **+ Custom Domain** and enter `openshelflibrary.com`.
+4. Railway will display a **CNAME** record. Go to your domain registrar's DNS settings and add:
+
+   | Type | Name | Value |
+   |------|------|-------|
+   | CNAME | `@` or root | `<value from Railway>` |
+   | CNAME | `www` | `<value from Railway>` |
+
+5. Wait for DNS propagation (typically 5–30 minutes).
+6. Railway automatically provisions an SSL certificate once DNS is verified — no extra configuration needed.
+
+> [!NOTE]
+> Some registrars don't support CNAME on the root domain (`@`). In that case, use Railway's provided IP address as an **A record** instead, or add `www.openshelflibrary.com` and set up a redirect from the root domain.
+
+### 5. Update Google OAuth Redirect URI
+If using Google SSO, update your Google Cloud Console credentials:
+- Add `https://openshelflibrary.com/signin-google` as an **Authorized redirect URI**.
+- Remove any old localhost or `*.up.railway.app` redirect URIs (unless still needed for testing).
+
+### 6. Auto-Deploy
+Every push to your connected branch triggers a new build and deploy automatically — no extra configuration needed.
+
+---
+
 ## Post-Deployment Configuration ⚙️
 
 ### First Login
