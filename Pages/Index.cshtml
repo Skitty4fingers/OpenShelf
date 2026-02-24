@@ -8,7 +8,16 @@
 
 <div class="text-center mb-4">
     <h1 class="display-4 fw-bold">
-        <i class="bi bi-book-half me-3" style="color: #a65d57;"></i><span style="color: #a65d57;">Open</span> <span style="color: #c9a66b;">Shelf</span>
+        <span class="d-inline-flex align-items-center gap-3">
+            <i class="bi bi-book-half" style="color: #a65d57;"></i>
+            <span class="d-inline-flex lh-1">
+                <span style="color: #a65d57;">Open</span>
+                <span class="d-inline-flex flex-column" style="min-width: 0;">
+                    <span style="color: #c9a66b; white-space: nowrap;">Shelf</span>
+                    <span style="color: #8a7a6b; font-weight: 300; font-size: 0.35em; text-align-last: justify; white-space: nowrap;">LIBRARY</span>
+                </span>
+            </span>
+        </span>
     </h1>
     <p class="lead">Shared Book Recommendations</p>
     <a asp-page="/Add" class="btn btn-lg btn-success shadow-sm">
@@ -117,11 +126,11 @@
 }
 
 <!-- Filter & Sort Bar -->
-<div class="card mb-4 shadow-sm">
-    <div class="card-body">
-        <form method="get" class="row g-3 align-items-end">
+<div class="card mb-3 mb-md-4 shadow-sm">
+    <div class="card-body p-2 p-md-3">
+        <form method="get" class="row g-2 g-md-3 align-items-end">
             <!-- Search Row -->
-            <div class="col-12 mb-2">
+            <div class="col-12 mb-1 mb-md-2">
                 <div class="input-group">
                     <span class="input-group-text bg-body-tertiary"><i class="bi bi-search"></i></span>
                     <input type="text" asp-for="SearchQuery" class="form-control form-control-sm" placeholder="Search by title, author, or series...">
@@ -133,7 +142,7 @@
             </div>
             
             <div class="col-md">
-                <label class="form-label small text-muted">Genre</label>
+                <label class="form-label small text-muted mb-1">Genre</label>
                 <select asp-for="Genre" class="form-select form-select-sm">
                     <option value="">All Genres</option>
                     @foreach (var genre in Model.AllGenres)
@@ -143,7 +152,7 @@
                 </select>
             </div>
             <div class="col-md">
-                <label class="form-label small text-muted">Narrator</label>
+                <label class="form-label small text-muted mb-1">Narrator</label>
                 <select asp-for="Narrator" class="form-select form-select-sm">
                     <option value="">All Narrators</option>
                     @foreach (var narrator in Model.AllNarrators)
@@ -153,7 +162,7 @@
                 </select>
             </div>
             <div class="col-md">
-                <label class="form-label small text-muted">Recommender</label>
+                <label class="form-label small text-muted mb-1">Recommender</label>
                 <select asp-for="Recommender" class="form-select form-select-sm">
                     <option value="">All Recommenders</option>
                     @foreach (var rec in Model.AllRecommenders)
@@ -163,7 +172,7 @@
                 </select>
             </div>
             <div class="col-md">
-                <label class="form-label small text-muted">Sort By</label>
+                <label class="form-label small text-muted mb-1">Sort By</label>
                 <select asp-for="Sort" class="form-select form-select-sm">
                     <option value="recent">Most Recent</option>
                     <option value="popular">Most Popular</option>
@@ -174,7 +183,7 @@
                 </select>
             </div>
             <div class="col-md">
-                <label class="form-label small text-muted">View</label>
+                <label class="form-label small text-muted mb-1">View</label>
                 <div class="btn-group w-100" role="group">
                     <input type="radio" class="btn-check" name="ViewMode" id="viewDefault" value="default" @(Model.ViewMode != "mini" ? "checked" : "") onchange="this.form.submit()">
                     <label class="btn btn-sm btn-outline-secondary" for="viewDefault" title="Default Grid">

@@ -5,7 +5,7 @@
 }
 
 <div class="row justify-content-center">
-    <div class="col-lg-10">
+    <div class="col-12 col-xl-11">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a asp-page="/Index">Shelf</a></li>
@@ -15,9 +15,9 @@
 
         <h2 class="mb-4">Add a New Recommendation</h2>
 
-        <div class="row g-4">
-            <!-- Left Column: Search -->
-            <div class="col-md-6">
+        <div class="row g-4 align-items-stretch">
+            <!-- Column 1: Search -->
+            <div class="col-12 col-md-6 col-lg-4">
                 <div class="card h-100 bg-light border-0 shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-search"></i> Find Books</h5>
@@ -53,12 +53,11 @@
                     </div>
                 </div>
             </div>
-            </div>
 
-            <!-- Right Column: Bundle & Form -->
-            <div class="col-md-6">
+            <!-- Column 2: Bundle -->
+            <div class="col-12 col-md-6 col-lg-4">
                 <!-- Bundle View -->
-                <div class="card mb-4 border-primary">
+                <div class="card h-100 border-primary shadow-sm">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <span class="fw-bold"><i class="bi bi-collection"></i> Your Selection</span>
                         <span class="badge bg-white text-primary" id="bundleCount">0 Books</span>
@@ -73,10 +72,13 @@
                         </ul>
                     </div>
                 </div>
+            </div>
 
+            <!-- Column 3: Final Form -->
+            <div class="col-12 col-md-12 col-lg-4">
                 <!-- Final Form -->
-                <div class="card shadow-sm">
-                    <div class="card-body">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
                         <h5 class="card-title mb-3">Recommendation Details</h5>
                         <form method="post" id="mainForm" asp-page-handler="Save">
                             <div asp-validation-summary="ModelOnly" class="text-danger"></div>

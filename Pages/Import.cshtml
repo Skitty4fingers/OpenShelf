@@ -58,10 +58,20 @@
         </div>
         
         <div class="mt-4">
-             <h5>Expected CSV Columns</h5>
-             <small class="text-muted">
-                 Title, Author, Narrated By, Purchase Date, Duration, Release Date, Ave. Rating, Genre, Series Name, Series Sequence, Product ID, ASIN, Book URL, Summary, Description, Rating Count, Publisher, Copyright, Series URL, Abridged, Language
-             </small>
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2 gap-2">
+                <h5 class="mb-0">Required CSV Columns</h5>
+                <a asp-page-handler="DownloadSample" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-file-earmark-arrow-down"></i> Download Detailed Sample CSV
+                </a>
+            </div>
+            <p class="mb-1">
+                <span class="badge bg-primary">Title</span>
+                <span class="badge bg-primary">Author</span>
+                <span class="text-muted small ms-2">(Minimum Required)</span>
+            </p>
+            <small class="text-muted d-block mt-2">
+                You can optionally supply many additional fields such as Series Name, Series Sequence, Genre, Summary, Duration, etc. Download the detailed sample to see the exact column headers.
+            </small>
         </div>
     </div>
 </div>

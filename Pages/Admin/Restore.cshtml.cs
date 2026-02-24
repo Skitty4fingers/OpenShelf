@@ -65,6 +65,7 @@ public class RestoreModel : PageModel
             // Clear existing data if requested
             if (clearExisting)
             {
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM RecommendationLikes");
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Comments");
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM RecommendationItems");
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Recommendations");
@@ -86,6 +87,7 @@ public class RestoreModel : PageModel
                 var existingRec = await _context.Recommendations
                     .Include(r => r.Items)
                     .Include(r => r.Comments)
+                    .Include(r => r.LikeHistory)
                     .FirstOrDefaultAsync(r => r.Id == firstRecord.Rec_Id);
 
                 Recommendation rec;
@@ -100,7 +102,8 @@ public class RestoreModel : PageModel
                         Note = firstRecord.Rec_Note,
                         AddedAt = firstRecord.Rec_AddedAt,
                         Likes = firstRecord.Rec_Likes,
-                        SeriesDescription = firstRecord.Rec_SeriesDescription
+                        SeriesDescription = firstRecord.Rec_SeriesDescription,
+                        IsStaffPick = firstRecord.Rec_IsStaffPick
                     };
                     _context.Recommendations.Add(rec);
                     recsAdded++;
@@ -115,6 +118,7 @@ public class RestoreModel : PageModel
                     rec.AddedAt = firstRecord.Rec_AddedAt;
                     rec.Likes = firstRecord.Rec_Likes;
                     rec.SeriesDescription = firstRecord.Rec_SeriesDescription;
+                    rec.IsStaffPick = firstRecord.Rec_IsStaffPick;
                 }
 
                 // Add/update items
@@ -215,6 +219,26 @@ public class RestoreModel : PageModel
                         }
                     }
                 }
+                // Parse and add likes
+                if (!string.IsNullOrEmpty(firstRecord.LikeHistory))
+                {
+                    var parsedDates = firstRecord.LikeHistory.Split('|', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var dateStr in parsedDates)
+                    {
+                        if (DateTime.TryParse(dateStr, null, DateTimeStyles.RoundtripKind, out var likeDate))
+                        {
+                            var existingLike = rec.LikeHistory.FirstOrDefault(l => l.CreatedAt == likeDate);
+                            if (existingLike == null)
+                            {
+                                rec.LikeHistory.Add(new RecommendationLike
+                                {
+                                    CreatedAt = likeDate,
+                                    RecommendationId = rec.Id
+                                });
+                            }
+                        }
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -247,19 +271,25 @@ public class RestoreModel : PageModel
         
         if (string.IsNullOrEmpty(commentsField)) return result;
 
-        // Format: Author1:Text1:Date1|Author2:Text2:Date2
-        var commentParts = commentsField.Split('|');
+        // Use Regex split with negative lookbehind so we don't split on escaped pipes (\|)
+        var commentParts = System.Text.RegularExpressions.Regex.Split(commentsField, @"(?<!\\)\|");
         
         foreach (var part in commentParts)
         {
             if (string.IsNullOrWhiteSpace(part)) continue;
             
-            var fields = part.Split(':');
+            // Use Regex split with negative lookbehind so we don't split on escaped colons (\:)
+            var fields = System.Text.RegularExpressions.Regex.Split(part, @"(?<!\\):");
+            
             if (fields.Length >= 3)
             {
                 var author = UnescapeCommentField(fields[0]);
                 var text = UnescapeCommentField(fields[1]);
-                var dateStr = fields[2];
+                
+                // The date string (ISO-8601) naturally contains colons. 
+                // Since they weren't escaped during export, the Regex.Split shattered the date into pieces. 
+                // We must reconstruct it by joining all fields from index 2 onwards.
+                var dateStr = string.Join(":", fields.Skip(2));
                 
                 if (DateTime.TryParse(dateStr, null, DateTimeStyles.RoundtripKind, out var createdAt))
                 {
@@ -286,6 +316,8 @@ public class RestoreModel : PageModel
         public DateTime Rec_AddedAt { get; set; }
         public int Rec_Likes { get; set; }
         public string? Rec_SeriesDescription { get; set; }
+        public bool Rec_IsStaffPick { get; set; }
+        public string? LikeHistory { get; set; }
         
         public int? Item_Id { get; set; }
         public string? Item_Title { get; set; }

@@ -56,6 +56,17 @@ public class ImportModel : PageModel
         return Page();
     }
 
+    public IActionResult OnGetDownloadSample()
+    {
+        var csvHeader = "Title,Author,Genre,Series Name,Series Sequence\n";
+        var sampleRow1 = "Harry Potter and the Sorcerer's Stone,J.K. Rowling,Fantasy,Harry Potter,1\n";
+        var sampleRow2 = "Harry Potter and the Chamber of Secrets,J.K. Rowling,Fantasy,Harry Potter,2\n";
+        var sampleRow3 = "Lord of the Flies,William Golding,Classic,,\n";
+        
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csvHeader + sampleRow1 + sampleRow2 + sampleRow3);
+        return File(bytes, "text/csv", "OpenShelf_Basic_Sample.csv");
+    }
+
     // --- Endpoints ---
 
     public async Task<IActionResult> OnPostStartImportAsync()

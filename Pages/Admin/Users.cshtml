@@ -4,8 +4,8 @@
     ViewData["Title"] = "Manage Users";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="bi bi-people"></i> Manage Admin Users</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <h1 class="mb-0"><i class="bi bi-people"></i> Manage Admin Users</h1>
     <a asp-page="/Admin/Index" class="btn btn-outline-secondary">Back to Admin</a>
 </div>
 
@@ -32,7 +32,7 @@
                     <label for="newPassword" class="form-label">Password</label>
                     <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="8">
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
+                <div class="col-md-4 d-flex align-items-end mt-3 mt-md-0">
                     <button type="submit" class="btn btn-success w-100">
                         <i class="bi bi-plus-circle"></i> Add User
                     </button>
@@ -80,17 +80,19 @@
                                 }
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-warning" onclick="showResetPassword(@user.Id, '@user.Username')">
-                                    <i class="bi bi-key"></i> Reset Password
-                                </button>
-                                @if (user.Username != User.Identity?.Name)
-                                {
-                                    <form method="post" asp-page-handler="DeleteUser" asp-route-userId="@user.Id" class="d-inline" onsubmit="return confirm('Are you sure you want to delete user @user.Username? This cannot be undone.');">
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </button>
-                                    </form>
-                                }
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm btn-warning" onclick="showResetPassword(@user.Id, '@user.Username')">
+                                        <i class="bi bi-key"></i> Reset Password
+                                    </button>
+                                    @if (user.Username != User.Identity?.Name)
+                                    {
+                                        <form method="post" asp-page-handler="DeleteUser" asp-route-userId="@user.Id" class="d-inline" onsubmit="return confirm('Are you sure you want to delete user @user.Username? This cannot be undone.');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

@@ -117,28 +117,34 @@ In **Settings → Variables**, add:
 > [!NOTE]
 > Railway assigns a dynamic port via the `PORT` environment variable. The Dockerfile's `EXPOSE 80` is the container default, but Railway routes traffic through its own proxy.
 
-### 4. Custom Domain & SSL
-Railway provides free automatic SSL certificates via Let's Encrypt.
+### 4. DNS (Cloudflare) & SSL
+DNS is managed through [Cloudflare](https://dash.cloudflare.com) (free tier) which provides CNAME flattening at the root domain, DDoS protection, and caching.
 
-1. In your Railway service, go to **Settings → Networking**.
-2. Click **Generate Domain** to get a default `*.up.railway.app` URL.
-3. Click **+ Custom Domain** and enter `openshelflibrary.com`.
-4. Railway will display a **CNAME** record. Go to your domain registrar's DNS settings and add:
+**Nameservers** (configured at Network Solutions):
+```
+pola.ns.cloudflare.com
+tate.ns.cloudflare.com
+```
 
-   | Type | Name | Value |
-   |------|------|-------|
-   | CNAME | `@` or root | `<value from Railway>` |
-   | CNAME | `www` | `<value from Railway>` |
+**DNS Records in Cloudflare** (Railway-related):
 
-5. Wait for DNS propagation (typically 5–30 minutes).
-6. Railway automatically provisions an SSL certificate once DNS is verified — no extra configuration needed.
+| Type | Name | Value | Proxy |
+|------|------|-------|-------|
+| CNAME | `@` | `7ska1vh0.up.railway.app` | DNS only (gray cloud) |
+| CNAME | `www` | `7ska1vh0.up.railway.app` | DNS only (gray cloud) |
+| TXT | `_railway-verify` | `railway-verify=671065778b13...` | — |
 
-> [!NOTE]
-> Some registrars don't support CNAME on the root domain (`@`). In that case, use Railway's provided IP address as an **A record** instead, or add `www.openshelflibrary.com` and set up a redirect from the root domain.
+Railway automatically provisions SSL certificates via Let's Encrypt once DNS is verified.
+
+> [!IMPORTANT]
+> Keep Railway CNAME records set to **DNS only** (gray cloud) — not Proxied (orange cloud). Railway handles its own SSL termination. Enabling Cloudflare's proxy can cause SSL handshake conflicts.
+
+**Cloudflare SSL Settings**: Set to **Full (strict)** under SSL/TLS → Overview.
 
 ### 5. Update Google OAuth Redirect URI
 If using Google SSO, update your Google Cloud Console credentials:
 - Add `https://openshelflibrary.com/signin-google` as an **Authorized redirect URI**.
+- Add `https://www.openshelflibrary.com/signin-google` as well.
 - Remove any old localhost or `*.up.railway.app` redirect URIs (unless still needed for testing).
 
 ### 6. Auto-Deploy

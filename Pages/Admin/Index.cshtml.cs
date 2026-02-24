@@ -184,6 +184,7 @@ public class AdminIndexModel : PageModel
         var recs = await _context.Recommendations
             .Include(r => r.Items)
             .Include(r => r.Comments)
+            .Include(r => r.LikeHistory)
             .OrderBy(r => r.Title)
             .ToListAsync();
             
@@ -209,6 +210,8 @@ public class AdminIndexModel : PageModel
                     Rec_AddedAt = rec.AddedAt,
                     Rec_Likes = rec.Likes,
                     Rec_SeriesDescription = rec.SeriesDescription,
+                    Rec_IsStaffPick = rec.IsStaffPick,
+                    LikeHistory = FormatLikeHistory(rec.LikeHistory),
                     Comments = FormatComments(rec.Comments)
                 });
             }
@@ -235,6 +238,8 @@ public class AdminIndexModel : PageModel
             Rec_AddedAt = rec.AddedAt,
             Rec_Likes = rec.Likes,
             Rec_SeriesDescription = rec.SeriesDescription,
+            Rec_IsStaffPick = rec.IsStaffPick,
+            LikeHistory = FormatLikeHistory(rec.LikeHistory),
             
             // RecommendationItem fields
             Item_Id = item.Id,
@@ -284,6 +289,12 @@ public class AdminIndexModel : PageModel
         return field?.Replace(":", "\\:").Replace("|", "\\|") ?? "";
     }
 
+    private string? FormatLikeHistory(List<RecommendationLike> likes)
+    {
+        if (likes == null || !likes.Any()) return null;
+        return string.Join("|", likes.Select(l => l.CreatedAt.ToString("O")));
+    }
+
     public class FullExportRecord
     {
         // Recommendation fields
@@ -294,6 +305,8 @@ public class AdminIndexModel : PageModel
         public DateTime Rec_AddedAt { get; set; }
         public int Rec_Likes { get; set; }
         public string? Rec_SeriesDescription { get; set; }
+        public bool Rec_IsStaffPick { get; set; }
+        public string? LikeHistory { get; set; }
         
         // RecommendationItem fields
         public int? Item_Id { get; set; }
