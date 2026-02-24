@@ -12,11 +12,11 @@ OpenShelf is a self-hosted book recommendation and discovery platform. Track boo
 - **Dynamic Filters** — Filter by Genre, Narrator, or Recommender; fuzzy search by Title/Author.
 - **View Options** — Toggle between detailed lists and a compact mini-grid view.
 - **Read-Together Chat** — Comment threads on individual books.
-- **Import/Export** — Bulk import via CSV and full database export.
+- **Import/Export** — Bulk import via CSV (with downloadable templates) and 100% full database backups (including all comments, votes, and staff picks).
 - **Google SSO** — Optional Google Sign-In for public users (configurable via Admin UI).
 - **Require Login** — Optional login gate that requires authentication before accessing the shelf.
 - **Feature Flags** — Toggle individual features on/off from Admin Settings (Chat, Public Import, Metadata Refresh, etc.).
-- **Modern UI** — Responsive design with Dark Mode, Bootstrap 5, and Bootstrap Icons.
+- **Modern UI** — Fully responsive layouts optimized for mobile and desktop, featuring Dark Mode, Bootstrap 5, and Bootstrap Icons.
 
 ## Tech Stack
 
